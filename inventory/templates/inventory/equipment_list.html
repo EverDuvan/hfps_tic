@@ -1,0 +1,56 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Inventario{% endblock %}
+{% block page_title %}Inventario de Equipos{% endblock %}
+
+{% block content %}
+<div class="card">
+    <form method="get" action="" style="display: flex; gap: 1rem;">
+        <input type="text" name="q" placeholder="Buscar por Serial, Marca, Modelo..." value="{{ search_query }}">
+        <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem;">Buscar</button>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Serial</th>
+                <th>Tipo</th>
+                <th>Marca / Modelo</th>
+                <th>Área</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in equipments %}
+            <tr>
+                <td>{{ e.serial_number }}</td>
+                <td>{{ e.get_type_display }}</td>
+                <td>{{ e.brand }} {{ e.model }}</td>
+                <td>{{ e.area.name|default:"-" }}</td>
+                <td>
+                    <span style="
+                        padding: 0.25rem 0.5rem; 
+                        border-radius: 4px; 
+                        background: {% if e.status == 'ACTIVE' %}rgba(74, 222, 128, 0.2){% else %}rgba(248, 113, 113, 0.2){% endif %};
+                        color: {% if e.status == 'ACTIVE' %}#4ade80{% else %}#f87171{% endif %};
+                    ">
+                        {{ e.get_status_display }}
+                    </span>
+                </td>
+                <td>
+                    <!-- Future: Edit link -->
+                    <button class="btn" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">Ver</button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center;">No se encontraron equipos.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

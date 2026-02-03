@@ -1,0 +1,113 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Nuevo Mantenimiento{% endblock %}
+{% block page_title %}Registrar Mantenimiento (FR-GT-03){% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <div class="alert alert-error">
+        <strong>Error en el formulario:</strong> Por favor revise o complete los campos obligatorios.
+        <ul>
+            {% for field in form %}
+            {% if field.errors %}
+            <li><strong>{{ field.label }}:</strong> {{ field.errors|striptags }}</li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+        {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    <!-- General Info -->
+    <div class="card">
+        <h3>Información General</h3>
+        <div class="grid-3">
+            <div>
+                <label>Equipo</label>
+                {{ form.equipment }}
+            </div>
+            <div>
+                <label>Tipo de Mantenimiento</label>
+                {{ form.maintenance_type }}
+            </div>
+            <div>
+                <label>Fecha Próximo Mantenimiento</label>
+                {{ form.next_maintenance_date }}
+            </div>
+        </div>
+        <div class="grid-2" style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <label>Hora Inicio</label>
+                {{ form.start_time }}
+            </div>
+            <div>
+                <label>Hora Final</label>
+                {{ form.end_time }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Checklists Containers -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+
+        <!-- Section 4 -->
+        <div class="card">
+            <h3>4. Tipo de Soporte Requerido</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                <div>{{ form.type_review }} <label for="{{ form.type_review.id_for_label }}">Revisión</label></div>
+                <div>{{ form.type_software_failure }} <label for="{{ form.type_software_failure.id_for_label }}">Fallas
+                        SW</label></div>
+                <div>{{ form.type_connection }} <label for="{{ form.type_connection.id_for_label }}">Conexión</label>
+                </div>
+                <div>{{ form.type_updates }} <label for="{{ form.type_updates.id_for_label }}">Actualizaciones</label>
+                </div>
+                <div>{{ form.type_cleaning }} <label for="{{ form.type_cleaning.id_for_label }}">Limpieza</label></div>
+                <div>{{ form.type_install }} <label for="{{ form.type_install.id_for_label }}">Instalación</label></div>
+                <div>{{ form.type_peripheral }} <label for="{{ form.type_peripheral.id_for_label }}">Periféricos</label>
+                </div>
+                <div>{{ form.type_backup }} <label for="{{ form.type_backup.id_for_label }}">Backup</label></div>
+            </div>
+        </div>
+
+        <!-- Section 5 -->
+        <div class="card">
+            <h3>5. Limpieza S.O.</h3>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem;">
+                <div>{{ form.cleaning_defrag }} <label>Desfragmentación</label></div>
+                <div>{{ form.cleaning_cco }} <label>C-Cleaner</label></div>
+                <div>{{ form.cleaning_scandisk }} <label>ScanDisk</label></div>
+                <div>{{ form.cleaning_space }} <label>Espacio</label></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Section 6: Description -->
+    <div class="card">
+        <h3>6. Observaciones / Descripción del Trabajo</h3>
+        {{ form.description }}
+    </div>
+
+    <!-- Section 7 -->
+    <div class="card">
+        <h3>7. Etapas Mantenimiento Hardware</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem;">
+            <div>{{ form.hw_disassembly }} <label>Desmontaje</label></div>
+            <div>{{ form.hw_power_supply }} <label>Fuente Poder</label></div>
+            <div>{{ form.hw_fans }} <label>Ventiladores</label></div>
+            <div>{{ form.hw_chassis }} <label>Chasis</label></div>
+            <div>{{ form.hw_thermal_paste }} <label>Crema Disipadora</label></div>
+            <div>{{ form.hw_contacts }} <label>Contactos</label></div>
+            <div>{{ form.hw_keyboard_mouse }} <label>Teclado/Mouse</label></div>
+            <div>{{ form.hw_screen }} <label>Pantalla</label></div>
+            <div>{{ form.hw_reassembly }} <label>Ensamble</label></div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.2rem;">Guardar y Generar
+        Acta</button>
+</form>
+{% endblock %}

@@ -1,0 +1,5 @@
+serial_number,type,brand,model,area,status,processor,ram,storage,os,voltage,amperage,os_user,screen_size
+PC001,PC,Dell,Optiplex 7050,Recepción,ACTIVE,i5-7500,8GB,256GB SSD,Windows 10,110V,3A,recepcion,
+LAP001,LAPTOP,HP,ProBook 440,Gerencia,ACTIVE,i7-8550U,16GB,512GB SSD,Windows 11,110V,2.5A,gerente,14"
+PRN001,PRINTER,Kyocera,Ecosys M2040,Contabilidad,ACTIVE,,,,,,110V,5A,,
+AIO001,AIO,Lenovo,ThinkCentre,Sistemas,ACTIVE,i5,8GB,1TB HDD,Windows 10,110V,,admin_sis,23"

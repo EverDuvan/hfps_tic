@@ -1,0 +1,67 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid-3">
+    <div class="card">
+        <h3>Total Equipos</h3>
+        <p style="font-size: 2rem; font-weight: bold; color: var(--accent-color);">{{ total_equipment }}</p>
+    </div>
+    <div class="card">
+        <h3>Activos</h3>
+        <p style="font-size: 2rem; font-weight: bold; color: #4ade80;">{{ active_equipment }}</p>
+    </div>
+    <div class="card">
+        <h3>Mantenimientos</h3>
+        <p style="font-size: 2rem; font-weight: bold; color: #facc15;">{{ maintenance_count }}</p>
+    </div>
+</div>
+
+<div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+    <div class="card">
+        <h3>Mantenimientos Recientes</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Equipo</th>
+                    <th>Técnico</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in recent_maintenance %}
+                <tr>
+                    <td>{{ m.date }}</td>
+                    <td>{{ m.equipment }}</td>
+                    <td>{{ m.performed_by.username }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>Entregas Recientes</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Destino</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in recent_handovers %}
+                <tr>
+                    <td>{{ h.date|date:"Y-m-d" }}</td>
+                    <td>{{ h.get_type_display }}</td>
+                    <td>{{ h.destination_area.name|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
