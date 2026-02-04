@@ -4,7 +4,6 @@ from django.http import HttpResponse
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 import io
-from django.utils import timezone
 
 def export_to_excel(queryset, model_admin, request):
     meta = model_admin.model._meta

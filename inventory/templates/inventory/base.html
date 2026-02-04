@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,20 +9,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 </head>
+
 <body>
 
     <nav class="sidebar">
-        <div class="brand">HFPS TIC</div>
+        <a href="{% url 'dashboard' %}" class="brand" style="text-decoration: none;">HFPS TIC</a>
         <div class="nav-links">
-            <a href="{% url 'equipment_list' %}" class="{% if request.resolver_match.url_name == 'equipment_list' %}active{% endif %}">
+            <a href="{% url 'dashboard' %}"
+                class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                📊 Dashboard
+            </a>
+            <a href="{% url 'equipment_list' %}"
+                class="{% if request.resolver_match.url_name == 'equipment_list' %}active{% endif %}">
                 📦 Inventario
             </a>
-            <a href="{% url 'maintenance_create' %}" class="{% if request.resolver_match.url_name == 'maintenance_create' %}active{% endif %}">
+            <a href="{% url 'maintenance_create' %}"
+                class="{% if request.resolver_match.url_name == 'maintenance_create' %}active{% endif %}">
                 🛠️ Nuevo Mantenimiento
             </a>
-            <a href="/admin" target="_blank">
-                🔒 Admin Panel
+            {% if user.is_staff %}
+            <a href="{% url 'user_list' %}" class="{% if 'users' in request.path %}active{% endif %}">
+                👥 Usuarios
             </a>
+            {% endif %}
         </div>
     </nav>
 
@@ -30,9 +40,9 @@
             <h1>{% block page_title %}Dashboard{% endblock %}</h1>
             <div>
                 {% if user.is_authenticated %}
-                    <span>Hola, {{ user.username }}</span>
+                <span>Hola, {{ user.username }}</span>
                 {% else %}
-                    <a href="/admin/login" class="btn btn-primary">Login</a>
+                <a href="/admin/login" class="btn btn-primary">Login</a>
                 {% endif %}
             </div>
         </header>
@@ -43,4 +53,5 @@
 
     <script src="{% static 'js/main.js' %}"></script>
 </body>
+
 </html>

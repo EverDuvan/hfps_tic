@@ -5,10 +5,14 @@
 
 {% block content %}
 <div class="card">
-    <form method="get" action="" style="display: flex; gap: 1rem;">
-        <input type="text" name="q" placeholder="Buscar por Serial, Marca, Modelo..." value="{{ search_query }}">
-        <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem;">Buscar</button>
-    </form>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <form method="get" action="" style="display: flex; gap: 1rem; flex-grow: 1;">
+            <input type="text" name="q" placeholder="Buscar por Serial, Marca, Modelo, IP..."
+                value="{{ search_query }}">
+            <button type="submit" class="btn btn-primary" style="margin-top: 0;">Buscar</button>
+        </form>
+        <a href="{% url 'equipment_create' %}" class="btn btn-primary">Agregar Equipo</a>
+    </div>
 </div>
 
 <div class="card">
@@ -19,17 +23,26 @@
                 <th>Tipo</th>
                 <th>Marca / Modelo</th>
                 <th>Área</th>
+                <th>IP (Tipo)</th>
                 <th>Estado</th>
                 <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
-            {% for e in equipments %}
+            {% for e in page_obj %}
             <tr>
                 <td>{{ e.serial_number }}</td>
                 <td>{{ e.get_type_display }}</td>
                 <td>{{ e.brand }} {{ e.model }}</td>
                 <td>{{ e.area.name|default:"-" }}</td>
+                <td>
+                    {% if e.ip_address %}
+                    {{ e.ip_address }}
+                    <span style="font-size: 0.75rem; color: #6b7280;">({{ e.get_ip_type_display }})</span>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
                 <td>
                     <span style="
                         padding: 0.25rem 0.5rem; 
@@ -47,10 +60,29 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" style="text-align: center;">No se encontraron equipos.</td>
+                <td colspan="7" style="text-align: center;">No se encontraron equipos.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <div style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem;">
+        {% if page_obj.has_previous %}
+        <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}" class="btn">&laquo; Primero</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}"
+            class="btn">Anterior</a>
+        {% endif %}
+
+        <span style="align-self: center;">
+            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}"
+            class="btn">Siguiente</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}"
+            class="btn">Último &raquo;</a>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

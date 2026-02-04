@@ -1,0 +1,49 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Usuarios{% endblock %}
+{% block page_title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+        <a href="{% url 'user_create' %}" class="btn btn-primary">Agregar Nuevo Usuario</a>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Nombre Completo</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td style="font-weight: 500;">{{ u.username }}</td>
+                <td>{{ u.get_full_name|default:"-" }}</td>
+                <td>{{ u.email|default:"-" }}</td>
+                <td>
+                    {% if u.is_superuser %}
+                    <span style="color: #7c3aed; font-weight: 600;">Super Admin</span>
+                    {% elif u.is_staff %}
+                    <span style="color: #2563eb; font-weight: 600;">Administrador</span>
+                    {% else %}
+                    <span style="color: #4b5563;">Técnico / Usuario</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if u.is_active %}
+                    <span style="color: #16a34a;">Activo</span>
+                    {% else %}
+                    <span style="color: #dc2626;">Inactivo</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

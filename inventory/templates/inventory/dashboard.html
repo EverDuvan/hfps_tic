@@ -1,67 +1,159 @@
 {% extends 'inventory/base.html' %}
+{% load static %}
 
 {% block title %}Dashboard{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard de Gestión{% endblock %}
 
 {% block content %}
-<div class="grid-3">
-    <div class="card">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- KPI Cards -->
+<div class="grid-3" style="margin-bottom: 2rem;">
+    <div class="card" style="border-left: 4px solid var(--primary);">
         <h3>Total Equipos</h3>
-        <p style="font-size: 2rem; font-weight: bold; color: var(--accent-color);">{{ total_equipment }}</p>
+        <p style="font-size: 2.5rem; font-weight: 800; color: #1f2937;">{{ total_equipment }}</p>
     </div>
-    <div class="card">
-        <h3>Activos</h3>
-        <p style="font-size: 2rem; font-weight: bold; color: #4ade80;">{{ active_equipment }}</p>
+    <div class="card" style="border-left: 4px solid #4ade80;">
+        <h3>Equipos Activos</h3>
+        <p style="font-size: 2.5rem; font-weight: 800; color: #16a34a;">{{ active_equipment }}</p>
     </div>
-    <div class="card">
-        <h3>Mantenimientos</h3>
-        <p style="font-size: 2rem; font-weight: bold; color: #facc15;">{{ maintenance_count }}</p>
+    <div class="card" style="border-left: 4px solid #facc15;">
+        <h3>Mantenimientos (Histórico)</h3>
+        <p style="font-size: 2.5rem; font-weight: 800; color: #ca8a04;">{{ maintenance_count }}</p>
     </div>
 </div>
 
-<div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+<!-- Charts Row -->
+<div class="grid-2" style="margin-bottom: 2rem;">
     <div class="card">
-        <h3>Mantenimientos Recientes</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Equipo</th>
-                    <th>Técnico</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for m in recent_maintenance %}
-                <tr>
-                    <td>{{ m.date }}</td>
-                    <td>{{ m.equipment }}</td>
-                    <td>{{ m.performed_by.username }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h3>Estado de Equipos</h3>
+        <div style="height: 300px; display: flex; justify-content: center;">
+            <canvas id="statusChart"></canvas>
+        </div>
     </div>
-
     <div class="card">
-        <h3>Entregas Recientes</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Tipo</th>
-                    <th>Destino</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for h in recent_handovers %}
-                <tr>
-                    <td>{{ h.date|date:"Y-m-d" }}</td>
-                    <td>{{ h.get_type_display }}</td>
-                    <td>{{ h.destination_area.name|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h3>Distribución por Tipo</h3>
+        <div style="height: 300px;">
+            <canvas id="typeChart"></canvas>
+        </div>
     </div>
 </div>
+
+<!-- Bottom Row: Areas & Recents -->
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+    <!-- Top Areas Table/Chart -->
+    <div class="card">
+        <h3>Top Áreas con Equipos</h3>
+        <canvas id="areaChart"></canvas>
+    </div>
+
+    <!-- Recent Activity Tabs/List -->
+    <div class="card">
+        <h3>Actividad Reciente</h3>
+
+        <div style="margin-top: 1rem;">
+            <h4 style="color: #6b7280; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 0.5rem;">
+                Mantenimientos</h4>
+            <table style="margin-bottom: 1.5rem;">
+                <tbody>
+                    {% for m in recent_maintenance %}
+                    <tr>
+                        <td style="padding: 0.5rem;"><strong>{{ m.date|date:"d M" }}</strong></td>
+                        <td style="padding: 0.5rem;">{{ m.equipment.brand }} {{ m.equipment.model }}</td>
+                        <td style="padding: 0.5rem; color: #6b7280;">{{ m.performed_by.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h4 style="color: #6b7280; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 0.5rem;">Entregas
+            </h4>
+            <table>
+                <tbody>
+                    {% for h in recent_handovers %}
+                    <tr>
+                        <td style="padding: 0.5rem;"><strong>{{ h.date|date:"d M" }}</strong></td>
+                        <td style="padding: 0.5rem;">{{ h.get_type_display }}</td>
+                        <td style="padding: 0.5rem; color: #6b7280;">{{ h.destination_area.name|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Data from Django
+    const statusData = {{ status_data| safe }};
+    const typeData = {{ type_data| safe }};
+    const areaData = {{ area_data| safe }};
+
+    // Helper to process data
+    function processData(data, labelKey, valueKey) {
+        return {
+            labels: data.map(d => d[labelKey]),
+            values: data.map(d => d[valueKey])
+        };
+    }
+
+    const statusProcessed = {
+        labels: statusData.map(d => d.status), // Might need mapping to human readable if needed, or django template filter
+        values: statusData.map(d => d.count)
+    };
+
+    // Status Chart
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: statusData.map(d => d.status),
+            datasets: [{
+                data: statusData.map(d => d.count),
+                backgroundColor: ['#4ade80', '#f87171', '#facc15', '#60a5fa'],
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // Type Chart
+    new Chart(document.getElementById('typeChart'), {
+        type: 'bar',
+        data: {
+            labels: typeData.map(d => d.type),
+            datasets: [{
+                label: 'Cantidad',
+                data: typeData.map(d => d.count),
+                backgroundColor: '#3b82f6',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // Area Chart (Horizontal Bar)
+    new Chart(document.getElementById('areaChart'), {
+        type: 'bar',
+        data: {
+            labels: areaData.map(d => d.area__name),
+            datasets: [{
+                label: 'Equipos',
+                data: areaData.map(d => d.count),
+                backgroundColor: '#8b5cf6',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            scales: { x: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
 {% endblock %}

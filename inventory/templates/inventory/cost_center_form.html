@@ -1,0 +1,33 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Nuevo Centro de Costos{% endblock %}
+{% block page_title %}Reg. Nuevo Centro de Costos{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <form method="post">
+        {% csrf_token %}
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.errors %}
+                <div style="color: red; font-size: 0.8rem; margin-top: 0.25rem;">
+                    {{ field.errors }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+            <a href="javascript:history.back()" class="btn" style="background-color: #6b7280;">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar Centro</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

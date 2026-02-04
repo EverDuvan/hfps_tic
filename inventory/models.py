@@ -4,8 +4,15 @@ from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from .utils import generate_maintenance_pdf, generate_handover_pdf
+from .choices import (
+    EQUIPMENT_TYPE_CHOICES, EQUIPMENT_STATUS_CHOICES,
+    PERIPHERAL_TYPE_CHOICES, PERIPHERAL_STATUS_CHOICES,
+    MAINTENANCE_TYPE_CHOICES, HANDOVER_TYPE_CHOICES,
+    IP_TYPE_CHOICES
+)
 
 class CostCenter(models.Model):
+    """Model representing a Cost Center."""
     code = models.CharField(max_length=20, unique=True, verbose_name=_("Código"))
     name = models.CharField(max_length=100, verbose_name=_("Nombre"))
 
@@ -17,6 +24,7 @@ class CostCenter(models.Model):
         verbose_name_plural = _("Centros de Costos")
 
 class Area(models.Model):
+    """Model representing an Area within the organization."""
     name = models.CharField(max_length=100, unique=True, verbose_name=_("Nombre"))
     description = models.TextField(blank=True, null=True, verbose_name=_("Descripción"))
     cost_center = models.ForeignKey(CostCenter, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Centro de Costos"))
@@ -27,7 +35,9 @@ class Area(models.Model):
     class Meta:
         verbose_name = _("Área")
         verbose_name_plural = _("Áreas")
+
 class Client(models.Model):
+    """Model representing a Client or Employee (Funcionario)."""
     name = models.CharField(max_length=100, verbose_name=_("Nombre Completo"))
     identification = models.CharField(max_length=20, unique=True, verbose_name=_("Identificación / Cédula"))
     email = models.EmailField(blank=True, null=True, verbose_name=_("Correo Electrónico"))
@@ -42,46 +52,33 @@ class Client(models.Model):
         verbose_name_plural = _("Clientes / Funcionarios")
 
 class Technician(User):
+    """Proxy model for User to distinguish Technicians."""
     class Meta:
         proxy = True
         verbose_name = _("Ingeniero / Técnico")
         verbose_name_plural = _("Ingenieros / Técnicos")
 
 class Equipment(models.Model):
-    TYPE_CHOICES = [
-        ('PC', 'PC de Escritorio'),
-        ('LAPTOP', 'Portátil'),
-        ('AIO', 'All-in-One'),
-        ('SERVER', 'Servidor'),
-        ('PRINTER', 'Impresora'),
-        ('SCANNER', 'Escáner'),
-        ('OTHER', 'Otro'),
-    ]
-
-    STATUS_CHOICES = [
-        ('ACTIVE', 'Activo'),
-        ('MAINTENANCE', 'En Mantenimiento'),
-        ('RETIRED', 'Dado de Baja'),
-        ('aSTOCK', 'En Stock'),
-    ]
-
+    """Model representing an IT Equipment item."""
     serial_number = models.CharField(max_length=100, unique=True, verbose_name=_("Número de Serie"))
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES, verbose_name=_("Tipo"))
+    type = models.CharField(max_length=20, choices=EQUIPMENT_TYPE_CHOICES, verbose_name=_("Tipo"))
     brand = models.CharField(max_length=100, verbose_name=_("Marca"))
     model = models.CharField(max_length=100, verbose_name=_("Modelo"))
     operating_system = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Sistema Operativo"))
     processor = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Procesador"))
     ram = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("RAM"))
     storage = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Almacenamiento"))
-    voltage = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Voltaje"))
-    amperage = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Amperaje"))
     os_user = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Usuario SO"))
     screen_size = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Tamaño Pantalla"))
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE', verbose_name=_("Estado"))
+    status = models.CharField(max_length=20, choices=EQUIPMENT_STATUS_CHOICES, default='ACTIVE', verbose_name=_("Estado"))
     area = models.ForeignKey(Area, on_delete=models.SET_NULL, null=True, blank=True, related_name='equipments', verbose_name=_("Área"))
     purchase_date = models.DateField(blank=True, null=True, verbose_name=_("Fecha de Compra"))
     warranty_expiry = models.DateField(blank=True, null=True, verbose_name=_("Vencimiento de Garantía"))
     
+    # New IP Fields
+    ip_address = models.GenericIPAddressField(blank=True, null=True, verbose_name=_("Dirección IP"))
+    ip_type = models.CharField(max_length=20, choices=IP_TYPE_CHOICES, default='DHCP', verbose_name=_("Tipo de IP"))
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -93,27 +90,12 @@ class Equipment(models.Model):
         verbose_name_plural = _("Equipos")
 
 class Peripheral(models.Model):
-    TYPE_CHOICES = [
-        ('MONITOR', 'Monitor'),
-        ('KEYBOARD', 'Teclado'),
-        ('MOUSE', 'Mouse'),
-        ('HEADSET', 'Diadema/Audífonos'),
-        ('WEBCAM', 'Cámara Web'),
-        ('OTHER', 'Otro'),
-    ]
-
-    STATUS_CHOICES = [
-        ('ACTIVE', 'Activo'),
-        ('FAULTY', 'Dañado'),
-        ('RETIRED', 'Dado de Baja'),
-        ('STOCK', 'En Stock'),
-    ]
-
+    """Model representing a Peripheral (Keyboard, Mouse, etc.)."""
     serial_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Número de Serie")) # Some peripherals don't have serials
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES, verbose_name=_("Tipo"))
+    type = models.CharField(max_length=20, choices=PERIPHERAL_TYPE_CHOICES, verbose_name=_("Tipo"))
     brand = models.CharField(max_length=100, verbose_name=_("Marca"))
     model = models.CharField(max_length=100, verbose_name=_("Modelo"))
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE', verbose_name=_("Estado"))
+    status = models.CharField(max_length=20, choices=PERIPHERAL_STATUS_CHOICES, default='ACTIVE', verbose_name=_("Estado"))
     connected_to = models.ForeignKey(Equipment, on_delete=models.SET_NULL, null=True, blank=True, related_name='peripherals', verbose_name=_("Conectado a"))
     area = models.ForeignKey(Area, on_delete=models.SET_NULL, null=True, blank=True, related_name='peripherals', verbose_name=_("Área"))
     
@@ -125,14 +107,10 @@ class Peripheral(models.Model):
         verbose_name_plural = _("Periféricos")
 
 class Maintenance(models.Model):
-    TYPE_CHOICES = [
-        ('PREVENTIVE', 'Preventivo'),
-        ('CORRECTIVE', 'Correctivo'),
-    ]
-
+    """Model representing a Maintenance record (Preventive or Corrective)."""
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='maintenances', verbose_name=_("Equipo"))
     date = models.DateField(default=timezone.now, verbose_name=_("Fecha"))
-    maintenance_type = models.CharField(max_length=20, choices=TYPE_CHOICES, verbose_name=_("Tipo de Mantenimiento"))
+    maintenance_type = models.CharField(max_length=20, choices=MAINTENANCE_TYPE_CHOICES, verbose_name=_("Tipo de Mantenimiento"))
     description = models.TextField(verbose_name=_("Descripción del Trabajo"))
     performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name=_("Realizado por"))
     next_maintenance_date = models.DateField(blank=True, null=True, verbose_name=_("Próximo Mantenimiento"))
@@ -178,14 +156,9 @@ class Maintenance(models.Model):
         
         if should_generate_pdf:
             pdf_content = generate_maintenance_pdf(self)
-            # Save the file. content.save() calls model.save(), so we must prevent infinite recursion if possible,
-            # but FileField.save() sets the field and saves the model.
-            # To be safe, we can check if the field is already set to this filename, but filename generation uses ID.
             filename = f'acta_mantenimiento_{self.id}.pdf'
             
-            # Using save=False on the field save would prevent recursion but might not persist the field change to DB depending on storage.
-            # However, standard practice to avoid recursion loop with FileField save is tricky. 
-            # Better approach: save the file content to the field, then save the model with update_fields.
+            # Save the file content to the field, then save the model with update_fields.
             self.acta_pdf.save(filename, ContentFile(pdf_content), save=False)
             super().save(update_fields=['acta_pdf'])
 
@@ -197,14 +170,9 @@ class Maintenance(models.Model):
         verbose_name_plural = _("Mantenimientos")
 
 class Handover(models.Model):
-    TYPE_CHOICES = [
-        ('ASSIGNMENT', 'Asignación'),
-        ('RETURN', 'Devolución'),
-        ('TRANSFER', 'Traslado'),
-    ]
-
+    """Model representing an Equipment Handover (Acta de Entrega)."""
     date = models.DateTimeField(auto_now_add=True, verbose_name=_("Fecha y Hora"))
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES, verbose_name=_("Tipo de Entrega"))
+    type = models.CharField(max_length=20, choices=HANDOVER_TYPE_CHOICES, verbose_name=_("Tipo de Entrega"))
     equipment = models.ManyToManyField(Equipment, blank=True, related_name='handovers', verbose_name=_("Equipos"))
     peripherals = models.ManyToManyField(Peripheral, blank=True, related_name='handovers', verbose_name=_("Periféricos"))
     source_area = models.ForeignKey(Area, on_delete=models.SET_NULL, null=True, blank=True, related_name='handovers_from', verbose_name=_("Área Origen"))
