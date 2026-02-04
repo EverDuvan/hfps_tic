@@ -27,15 +27,34 @@
                 class="{% if request.resolver_match.url_name == 'maintenance_create' %}active{% endif %}">
                 🛠️ Nuevo Mantenimiento
             </a>
+            <a href="{% url 'handover_create' %}"
+                class="{% if request.resolver_match.url_name == 'handover_create' %}active{% endif %}">
+                📝 Nueva Entrega
+            </a>
             <a href="{% url 'peripheral_list' %}"
-                class="{% if request.resolver_match.url_name == 'peripheral_list' %}active{% endif %}">
+                class="{% if request.resolver_match.url_name == 'peripheral_list' or request.resolver_match.url_name == 'peripheral_detail' %}active{% endif %}">
                 🖱️ Periféricos
+            </a>
+            <a href="{% url 'area_list' %}"
+                class="{% if request.resolver_match.url_name == 'area_list' or request.resolver_match.url_name == 'area_edit' %}active{% endif %}">
+                🏢 Áreas
+            </a>
+            <a href="{% url 'cost_center_list' %}"
+                class="{% if request.resolver_match.url_name == 'cost_center_list' or request.resolver_match.url_name == 'cost_center_edit' %}active{% endif %}">
+                💰 Centros de Costos
             </a>
             {% if user.is_staff %}
             <a href="{% url 'user_list' %}" class="{% if 'users' in request.path %}active{% endif %}">
                 👥 Usuarios
             </a>
             {% endif %}
+            <form action="{% url 'logout' %}" method="post" style="margin-top: auto; padding-top: 2rem;">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn"
+                    style="background: none; border: none; color: #ef4444; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.75rem 1rem; text-decoration: none;">
+                    🚪 Cerrar Sesión
+                </button>
+            </form>
         </div>
     </nav>
 
@@ -46,7 +65,7 @@
                 {% if user.is_authenticated %}
                 <span>Hola, {{ user.username }}</span>
                 {% else %}
-                <a href="/admin/login" class="btn btn-primary">Login</a>
+                <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
                 {% endif %}
             </div>
         </header>

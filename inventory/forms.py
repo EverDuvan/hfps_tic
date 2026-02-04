@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import Maintenance, Equipment, Area, CostCenter, Peripheral
+from .models import Maintenance, Equipment, Area, CostCenter, Peripheral, Handover, Client
 from django.contrib.auth.models import User
 
 class CustomUserCreationForm(UserCreationForm):
@@ -96,4 +96,49 @@ class PeripheralForm(forms.ModelForm):
                 current_classes = self.fields[field].widget.attrs.get('class', '')
                 if 'form-select' not in current_classes:
                     self.fields[field].widget.attrs['class'] = (current_classes + ' form-control').strip()
+
+                if 'form-select' not in current_classes:
+                    self.fields[field].widget.attrs['class'] = (current_classes + ' form-control').strip()
+
+class ClientForm(forms.ModelForm):
+    class Meta:
+        model = Client
+        fields = '__all__'
+        widgets = {
+            'area': forms.Select(attrs={'class': 'form-select'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            if hasattr(self.fields[field], 'widget') and hasattr(self.fields[field].widget, 'attrs'):
+                current_classes = self.fields[field].widget.attrs.get('class', '')
+                if 'form-select' not in current_classes:
+                    self.fields[field].widget.attrs['class'] = (current_classes + ' form-control').strip()
+
+class HandoverForm(forms.ModelForm):
+    class Meta:
+        model = Handover
+        fields = ['client', 'source_area', 'destination_area', 'equipment', 'peripherals', 'receiver_name', 'observations', 'type']
+        widgets = {
+            'client': forms.Select(attrs={'class': 'form-select'}),
+            'source_area': forms.Select(attrs={'class': 'form-select'}),
+            'destination_area': forms.Select(attrs={'class': 'form-select'}),
+            'type': forms.Select(attrs={'class': 'form-select'}),
+            'equipment': forms.SelectMultiple(attrs={'class': 'form-select', 'style': 'height: 200px;'}),
+            'peripherals': forms.SelectMultiple(attrs={'class': 'form-select', 'style': 'height: 200px;'}),
+            'observations': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'receiver_name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'equipment': 'Equipos (Mantenga presionado Ctrl para seleccionar varios)',
+            'peripherals': 'Periféricos (Mantenga presionado Ctrl para seleccionar varios)',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Optional: Filter querysets to show helpful text
+        # self.fields['equipment'].queryset = Equipment.objects.filter(status='ACTIVE') 
+        # But keeping all is safer for flexibility
+        pass
 

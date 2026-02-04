@@ -267,7 +267,7 @@ def generate_maintenance_pdf(m):
     pdf.output(output)
     return output.getvalue()
 
-def generate_handover_pdf(handover):
+def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
     pdf = PDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
@@ -311,15 +311,25 @@ def generate_handover_pdf(handover):
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, "Equipos:", ln=True)
     pdf.set_font("Arial", '', 12)
-    for eq in handover.equipment.all():
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 10, "Equipos:", ln=True)
+    pdf.set_font("Arial", '', 12)
+    
+    # Use provided list or fallback to relation
+    final_equipment = equipment_list if equipment_list is not None else handover.equipment.all()
+    
+    for eq in final_equipment:
          pdf.cell(0, 10, f"- {eq}", ln=True)
 
-    if handover.peripherals.count() > 0:
+    # Use provided list or fallback to relation
+    final_peripherals = peripheral_list if peripheral_list is not None else handover.peripherals.all()
+
+    if len(final_peripherals) > 0:
         pdf.ln(5)
         pdf.set_font("Arial", 'B', 12)
         pdf.cell(0, 10, "Periféricos:", ln=True)
         pdf.set_font("Arial", '', 12)
-        for p in handover.peripherals.all():
+        for p in final_peripherals:
              pdf.cell(0, 10, f"- {p}", ln=True)
 
     if handover.observations:

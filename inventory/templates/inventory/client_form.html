@@ -1,0 +1,71 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Nuevo Cliente / Funcionario{% endblock %}
+{% block page_title %}Registrar Nuevo Cliente / Funcionario{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.name.id_for_label }}" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                {{ form.name.label }}
+            </label>
+            {{ form.name }}
+            {% if form.name.errors %}
+            <div style="color: #ef4444; font-size: 0.8rem;">{{ form.name.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.identification.id_for_label }}"
+                style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                {{ form.identification.label }}
+            </label>
+            {{ form.identification }}
+            {% if form.identification.errors %}
+            <div style="color: #ef4444; font-size: 0.8rem;">{{ form.identification.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.email.id_for_label }}" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                {{ form.email.label }}
+            </label>
+            {{ form.email }}
+            {% if form.email.errors %}
+            <div style="color: #ef4444; font-size: 0.8rem;">{{ form.email.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.phone.id_for_label }}" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                {{ form.phone.label }}
+            </label>
+            {{ form.phone }}
+            {% if form.phone.errors %}
+            <div style="color: #ef4444; font-size: 0.8rem;">{{ form.phone.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label for="{{ form.area.id_for_label }}"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 500;">
+                {{ form.area.label }}
+                <a href="{% url 'area_create' %}?next={% url 'client_create' %}"
+                    style="font-size: 0.8rem; color: #3b82f6; text-decoration: none;">➕ Nueva Área</a>
+            </label>
+            {{ form.area }}
+            {% if form.area.errors %}
+            <div style="color: #ef4444; font-size: 0.8rem;">{{ form.area.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <a href="javascript:history.back()" class="btn" style="background-color: #6b7280;">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar Funcionario</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

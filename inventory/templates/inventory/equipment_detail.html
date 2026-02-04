@@ -16,9 +16,12 @@
             font-weight: 500;
             background: {% if equipment.status == 'ACTIVE' %}rgba(74, 222, 128, 0.2){% else %}rgba(248, 113, 113, 0.2){% endif %};
             color: {% if equipment.status == 'ACTIVE' %}#15803d{% else %}#b91c1c{% endif %};
-        ">
             {{ equipment.get_status_display }}
         </span>
+    </div>
+    
+    <div style=" margin-bottom: 2rem;">
+            <a href="{% url 'equipment_edit' equipment.pk %}" class="btn btn-primary">✏️ Editar Equipo</a>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">

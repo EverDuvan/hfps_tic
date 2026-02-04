@@ -1,0 +1,49 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Centros de Costos{% endblock %}
+{% block page_title %}Gestión de Centros de Costos{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div class="search-bar">
+            <!-- Search implementation skipped for simplicity in this iteration -->
+        </div>
+        <a href="{% url 'cost_center_create' %}?next={% url 'cost_center_list' %}" class="btn btn-primary">
+            ➕ Nuevo Centro de Costos
+        </a>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cc in cost_centers %}
+                <tr>
+                    <td style="font-weight: 500; color: #111827;">{{ cc.code }}</td>
+                    <td>{{ cc.name }}</td>
+                    <td>
+                        <a href="{% url 'cost_center_edit' cc.pk %}" class="btn"
+                            style="padding: 0.25rem 0.6rem; font-size: 0.8rem; background-color: #3b82f6;">
+                            ✏️
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="text-align: center; padding: 1rem; color: #6b7280;">
+                        No se encontraron centros de costos registrados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

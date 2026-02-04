@@ -1,0 +1,160 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}{{ title|default:"Nueva Entrega" }}{% endblock %}
+{% block page_title %}{{ title|default:"Nueva Acta de Entrega" }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 900px; margin: 0 auto;">
+    <form method="post">
+        {% csrf_token %}
+
+        <h3 style="margin-bottom: 1.5rem; color: #111827; font-size: 1.25rem;">Información General</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+
+            <div class="form-group">
+                <label for="{{ form.type.id_for_label }}"
+                    style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                    {{ form.type.label }}
+                </label>
+                {{ form.type }}
+                {% if form.type.errors %}
+                <div style="color: #ef4444; font-size: 0.8rem;">{{ form.type.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.client.id_for_label }}"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 500;">
+                    {{ form.client.label }}
+                    <a href="{% url 'client_create' %}?next={% url 'handover_create' %}"
+                        style="font-size: 0.8rem; color: #3b82f6; text-decoration: none;">➕ Nuevo Cliente</a>
+                </label>
+                {{ form.client }}
+                {% if form.client.errors %}
+                <div style="color: #ef4444; font-size: 0.8rem;">{{ form.client.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.source_area.id_for_label }}"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 500;">
+                    {{ form.source_area.label }}
+                    <a href="{% url 'area_create' %}?next={% url 'handover_create' %}"
+                        style="font-size: 0.8rem; color: #3b82f6; text-decoration: none;">➕ Nueva Área</a>
+                </label>
+                {{ form.source_area }}
+                {% if form.source_area.errors %}
+                <div style="color: #ef4444; font-size: 0.8rem;">{{ form.source_area.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.destination_area.id_for_label }}"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 500;">
+                    {{ form.destination_area.label }}
+                    <a href="{% url 'area_create' %}?next={% url 'handover_create' %}"
+                        style="font-size: 0.8rem; color: #3b82f6; text-decoration: none;">➕ Nueva Área</a>
+                </label>
+                {{ form.destination_area }}
+                {% if form.destination_area.errors %}
+                <div style="color: #ef4444; font-size: 0.8rem;">{{ form.destination_area.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="{{ form.receiver_name.id_for_label }}"
+                    style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                    {{ form.receiver_name.label }}
+                </label>
+                {{ form.receiver_name }}
+                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">Opcional si es diferente al cliente
+                    seleccionado.</p>
+                {% if form.receiver_name.errors %}
+                <div style="color: #ef4444; font-size: 0.8rem;">{{ form.receiver_name.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <h3
+            style="margin-bottom: 1.5rem; color: #111827; font-size: 1.25rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+            Equipos y Periféricos</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="form-group">
+                <label for="{{ form.equipment.id_for_label }}"
+                    style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                    {{ form.equipment.label }}
+                </label>
+                {{ form.equipment }}
+                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">Use Ctrl+Click para seleccionar
+                    múltiples.</p>
+                <div id="equipment-preview-list" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px;">
+                </div>
+                {% if form.equipment.errors %}
+                <div style="color: #ef4444; font-size: 0.8rem;">{{ form.equipment.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.peripherals.id_for_label }}"
+                    style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                    {{ form.peripherals.label }}
+                </label>
+                {{ form.peripherals }}
+                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">Use Ctrl+Click para seleccionar
+                    múltiples.</p>
+                <div id="peripheral-preview-list" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px;">
+                </div>
+                {% if form.peripherals.errors %}
+                <div style="color: #ef4444; font-size: 0.8rem;">{{ form.peripherals.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <h3
+            style="margin-bottom: 1.5rem; color: #111827; font-size: 1.25rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+            Observaciones</h3>
+        <div class="form-group" style="margin-bottom: 2rem;">
+            {{ form.observations }}
+            {% if form.observations.errors %}
+            <div style="color: #ef4444; font-size: 0.8rem;">{{ form.observations.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <a href="{% url 'dashboard' %}" class="btn" style="background-color: #6b7280;">Cancelar</a>
+            <button type="submit" name="action" value="preview" class="btn" style="background-color: #3b82f6;"
+                formtarget="_blank">👁️ Previsualizar PDF</button>
+            <button type="submit" name="action" value="save" class="btn btn-primary">Generar Acta de Entrega</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const equipSelect = document.getElementById('{{ form.equipment.id_for_label }}');
+        const periSelect = document.getElementById('{{ form.peripherals.id_for_label }}');
+
+        function updatePreview(selectElement, previewContainerId) {
+            const container = document.getElementById(previewContainerId);
+            container.innerHTML = ''; // Clear current
+
+            const selectedOptions = Array.from(selectElement.selectedOptions);
+
+            selectedOptions.forEach(option => {
+                const badge = document.createElement('span');
+                badge.style.cssText = 'background-color: #e5e7eb; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; border: 1px solid #d1d5db; color: #374151;';
+                badge.textContent = option.text;
+                container.appendChild(badge);
+            });
+        }
+
+        // Initial setup
+        updatePreview(equipSelect, 'equipment-preview-list');
+        updatePreview(periSelect, 'peripheral-preview-list');
+
+        // Event listeners
+        equipSelect.addEventListener('change', () => updatePreview(equipSelect, 'equipment-preview-list'));
+        periSelect.addEventListener('change', () => updatePreview(periSelect, 'peripheral-preview-list'));
+    });
+</script>
+{% endblock %}

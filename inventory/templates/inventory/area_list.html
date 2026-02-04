@@ -1,0 +1,63 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Áreas{% endblock %}
+{% block page_title %}Gestión de Áreas{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div class="search-bar">
+            <!-- Search implementation skipped for simplicity in this iteration, can be added if requested -->
+        </div>
+        <a href="{% url 'area_create' %}?next={% url 'area_list' %}" class="btn btn-primary">
+            ➕ Nueva Área
+        </a>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Centro de Costos</th>
+                    <th>Equipos</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for area in areas %}
+                <tr>
+                    <td style="font-weight: 500; color: #111827;">{{ area.name }}</td>
+                    <td>{{ area.description|default:"-" }}</td>
+                    <td>
+                        {% if area.cost_center %}
+                        {{ area.cost_center.code }} - {{ area.cost_center.name }}
+                        {% else %}
+                        <span style="color: #9ca3af;">Sin asignar</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge" style="background-color: #e5e7eb; color: #374151;">
+                            {{ area.equipments.count }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'area_edit' area.pk %}" class="btn"
+                            style="padding: 0.25rem 0.6rem; font-size: 0.8rem; background-color: #3b82f6;">
+                            ✏️
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; py-4; color: #6b7280;">
+                        No se encontraron áreas registradas.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Detalle del Periférico{% endblock %}
+{% block page_title %}Detalle del Periférico: {{ peripheral.serial_number|default:peripheral.model }}{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+        <div>
+            <h2 style="margin: 0; color: #111827; font-size: 1.5rem;">{{ peripheral.brand }} {{ peripheral.model }}</h2>
+            <p style="margin: 0.5rem 0 0; color: #6b7280;">{{ peripheral.get_type_display }}</p>
+        </div>
+        <span style="
+            padding: 0.5rem 1rem; 
+            border-radius: 9999px; 
+            font-weight: 500;
+            background: {% if peripheral.status == 'ACTIVE' %}rgba(74, 222, 128, 0.2){% else %}rgba(248, 113, 113, 0.2){% endif %};
+            color: {% if peripheral.status == 'ACTIVE' %}#15803d{% else %}#b91c1c{% endif %};
+        ">
+            {{ peripheral.get_status_display }}
+        </span>
+    </div>
+
+    <!-- Edit Button -->
+    <div style="margin-bottom: 2rem;">
+        <a href="{% url 'peripheral_edit' peripheral.pk %}" class="btn btn-primary">✏️ Editar Periférico</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
+        <div>
+            <h3
+                style="font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                Ubicación Actual
+            </h3>
+            <p style="font-size: 1.125rem; margin: 0;">{{ peripheral.area.name|default:"Sin asignar" }}</p>
+        </div>
+        <div>
+            <h3
+                style="font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                Conectado A
+            </h3>
+            <p style="font-size: 1.125rem; margin: 0;">
+                {% if peripheral.connected_to %}
+                <a href="{% url 'equipment_detail' peripheral.connected_to.pk %}"
+                    style="text-decoration: underline; color: #2563eb;">
+                    {{ peripheral.connected_to.serial_number }}
+                </a>
+                {% else %}
+                -
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <h3
+                style="font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                Serial
+            </h3>
+            <p style="font-size: 1.125rem; margin: 0;">{{ peripheral.serial_number|default:"-" }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="font-size: 1.25rem; margin-bottom: 1rem; color: #111827;">Historial de Asignaciones (Entregas)</h3>
+    {% if handovers %}
+    <table style="font-size: 0.9rem;">
+        <thead>
+            <tr>
+                <th style="padding: 0.5rem;">Fecha</th>
+                <th style="padding: 0.5rem;">Tipo</th>
+                <th style="padding: 0.5rem;">Asignado a</th>
+                <th style="padding: 0.5rem;">Acta</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in handovers %}
+            <tr>
+                <td style="padding: 0.5rem;">{{ h.date }}</td>
+                <td style="padding: 0.5rem;">{{ h.get_type_display }}</td>
+                <td style="padding: 0.5rem;">{{ h.assigned_to }}</td>
+                <td style="padding: 0.5rem;">
+                    <a href="{% url 'handover_acta' h.pk %}" target="_blank" style="color: #2563eb;">Ver PDF</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #6b7280; text-align: center; padding: 1rem;">No hay registros de entregas para este periférico.</p>
+    {% endif %}
+</div>
+
+<div style="margin-top: 2rem;">
+    <a href="{% url 'peripheral_list' %}" class="btn">Volver a la lista</a>
+</div>
+{% endblock %}

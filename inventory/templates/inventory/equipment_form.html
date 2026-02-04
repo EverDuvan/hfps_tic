@@ -1,7 +1,7 @@
 {% extends 'inventory/base.html' %}
 
-{% block title %}Nuevo Equipo{% endblock %}
-{% block page_title %}Registrar Nuevo Equipo{% endblock %}
+{% block title %}{{ title|default:"Nuevo Equipo" }}{% endblock %}
+{% block page_title %}{{ title|default:"Registrar Nuevo Equipo" }}{% endblock %}
 
 {% block content %}
 <div class="card" style="max-width: 800px; margin: 0 auto;">
@@ -16,8 +16,8 @@
                     {{ field.label }}
                     {% if field.name == 'area' %}
                     <a href="{% url 'area_create' %}?next={{ request.path }}"
-                        style="font-size: 0.8rem; font-weight: normal; margin-left: 0.5rem; color: #3b82f6;">+ Crear
-                        Nueva</a>
+                        style="font-size: 0.8rem; font-weight: normal; margin-left: 0.5rem; color: #3b82f6;">➕ Nueva
+                        Área</a>
                     {% endif %}
                 </label>
                 {{ field }}
