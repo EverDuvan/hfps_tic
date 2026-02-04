@@ -1,0 +1,160 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Detalle del Equipo{% endblock %}
+{% block page_title %}Detalle del Equipo: {{ equipment.serial_number }}{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+        <div>
+            <h2 style="margin: 0; color: #111827; font-size: 1.5rem;">{{ equipment.brand }} {{ equipment.model }}</h2>
+            <p style="margin: 0.5rem 0 0; color: #6b7280;">{{ equipment.get_type_display }}</p>
+        </div>
+        <span style="
+            padding: 0.5rem 1rem; 
+            border-radius: 9999px; 
+            font-weight: 500;
+            background: {% if equipment.status == 'ACTIVE' %}rgba(74, 222, 128, 0.2){% else %}rgba(248, 113, 113, 0.2){% endif %};
+            color: {% if equipment.status == 'ACTIVE' %}#15803d{% else %}#b91c1c{% endif %};
+        ">
+            {{ equipment.get_status_display }}
+        </span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
+        <div>
+            <h3
+                style="font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                Ubicación</h3>
+            <p style="font-size: 1.125rem; margin: 0;">{{ equipment.area.name|default:"Sin asignar" }}</p>
+        </div>
+        <div>
+            <h3
+                style="font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                Dirección IP</h3>
+            <p style="font-size: 1.125rem; margin: 0;">
+                {% if equipment.ip_address %}
+                {{ equipment.ip_address }} <span style="font-size: 0.875rem; color: #6b7280;">({{
+                    equipment.get_ip_type_display }})</span>
+                {% else %}
+                -
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <h3
+                style="font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                Fecha de Compra</h3>
+            <p style="font-size: 1.125rem; margin: 0;">{{ equipment.purchase_date|default:"-" }}</p>
+        </div>
+        <div>
+            <h3
+                style="font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                Garantía Hasta</h3>
+            <p style="font-size: 1.125rem; margin: 0;">{{ equipment.warranty_expiry|default:"-" }}</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+        <h3
+            style="font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
+            Especificaciones Técnicas</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+            <div>
+                <span style="display: block; font-size: 0.75rem; color: #6b7280;">Sistema Operativo</span>
+                <span style="font-weight: 500;">{{ equipment.operating_system|default:"-" }}</span>
+            </div>
+            <div>
+                <span style="display: block; font-size: 0.75rem; color: #6b7280;">Procesador</span>
+                <span style="font-weight: 500;">{{ equipment.processor|default:"-" }}</span>
+            </div>
+            <div>
+                <span style="display: block; font-size: 0.75rem; color: #6b7280;">Memoria RAM</span>
+                <span style="font-weight: 500;">{{ equipment.ram|default:"-" }}</span>
+            </div>
+            <div>
+                <span style="display: block; font-size: 0.75rem; color: #6b7280;">Almacenamiento</span>
+                <span style="font-weight: 500;">{{ equipment.storage|default:"-" }}</span>
+            </div>
+            <div>
+                <span style="display: block; font-size: 0.75rem; color: #6b7280;">Usuario SO</span>
+                <span style="font-weight: 500;">{{ equipment.os_user|default:"-" }}</span>
+            </div>
+            <div>
+                <span style="display: block; font-size: 0.75rem; color: #6b7280;">Voltaje</span>
+                <span style="font-weight: 500;">{{ equipment.voltage|default:"-" }}</span>
+            </div>
+            <div>
+                <span style="display: block; font-size: 0.75rem; color: #6b7280;">Amperaje</span>
+                <span style="font-weight: 500;">{{ equipment.amperage|default:"-" }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <!-- Maintenance History -->
+    <div class="card">
+        <h3 style="font-size: 1.25rem; margin-bottom: 1rem; color: #111827;">Historial de Mantenimientos</h3>
+        {% if maintenances %}
+        <table style="font-size: 0.9rem;">
+            <thead>
+                <tr>
+                    <th style="padding: 0.5rem;">Fecha</th>
+                    <th style="padding: 0.5rem;">Tipo</th>
+                    <th style="padding: 0.5rem;">Realizado por</th>
+                    <th style="padding: 0.5rem;">Acta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in maintenances %}
+                <tr>
+                    <td style="padding: 0.5rem;">{{ m.date }}</td>
+                    <td style="padding: 0.5rem;">{{ m.get_maintenance_type_display }}</td>
+                    <td style="padding: 0.5rem;">{{ m.performed_by.username }}</td>
+                    <td style="padding: 0.5rem;">
+                        <a href="{% url 'maintenance_acta' m.pk %}" target="_blank" style="color: #2563eb;">Ver PDF</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: #6b7280; text-align: center; padding: 1rem;">No hay registros de mantenimiento.</p>
+        {% endif %}
+    </div>
+
+    <!-- Handover History -->
+    <div class="card">
+        <h3 style="font-size: 1.25rem; margin-bottom: 1rem; color: #111827;">Historial de Entregas</h3>
+        {% if handovers %}
+        <table style="font-size: 0.9rem;">
+            <thead>
+                <tr>
+                    <th style="padding: 0.5rem;">Fecha</th>
+                    <th style="padding: 0.5rem;">Asignado a</th>
+                    <th style="padding: 0.5rem;">Acta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in handovers %}
+                <tr>
+                    <td style="padding: 0.5rem;">{{ h.date }}</td>
+                    <td style="padding: 0.5rem;">{{ h.assigned_to }}</td>
+                    <td style="padding: 0.5rem;">
+                        <a href="{% url 'handover_acta' h.pk %}" target="_blank" style="color: #2563eb;">Ver PDF</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: #6b7280; text-align: center; padding: 1rem;">No hay registros de entregas.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div style="margin-top: 2rem;">
+    <a href="{% url 'equipment_list' %}" class="btn">Volver a la lista</a>
+</div>
+{% endblock %}

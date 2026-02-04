@@ -79,6 +79,10 @@ class Equipment(models.Model):
     ip_address = models.GenericIPAddressField(blank=True, null=True, verbose_name=_("Dirección IP"))
     ip_type = models.CharField(max_length=20, choices=IP_TYPE_CHOICES, default='DHCP', verbose_name=_("Tipo de IP"))
 
+    # Electrical Specs
+    voltage = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Voltaje"))
+    amperage = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Amperaje (A)"))
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

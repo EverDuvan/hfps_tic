@@ -55,7 +55,8 @@
                 </td>
                 <td>
                     <!-- Future: Edit link -->
-                    <button class="btn" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">Ver</button>
+                    <a href="{% url 'equipment_detail' e.pk %}" class="btn"
+                        style="font-size: 0.8rem; padding: 0.25rem 0.5rem; text-decoration: none;">Ver</a>
                 </td>
             </tr>
             {% empty %}

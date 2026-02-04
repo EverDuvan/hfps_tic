@@ -1,0 +1,38 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Agregar Periférico{% endblock %}
+{% block page_title %}Agregar Periférico{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            {% for field in form %}
+            <div style="margin-bottom: 1rem; {% if forloop.counter == 1 %}grid-column: 1 / -1;{% endif %}">
+                <label for="{{ field.id_for_label }}"
+                    style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">
+                    {{ field.label }}
+                    {% if field.field.required %}<span style="color: #ef4444;">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                <p style="margin-top: 0.25rem; font-size: 0.875rem; color: #6b7280;">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                <div style="color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem;">
+                    {{ field.errors }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+            <a href="{% url 'peripheral_list' %}" class="btn"
+                style="background-color: #6b7280; color: white;">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar Periférico</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

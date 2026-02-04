@@ -1,0 +1,52 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Inventario de Periféricos{% endblock %}
+{% block page_title %}Inventario de Periféricos{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+        <a href="{% url 'peripheral_create' %}" class="btn btn-primary">Agregar Periférico</a>
+    </div>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Serial</th>
+                <th>Tipo</th>
+                <th>Marca / Modelo</th>
+                <th>Estado</th>
+                <th>Conectado a</th>
+                <th>Área</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in peripherals %}
+            <tr>
+                <td>{{ p.serial_number|default:"-" }}</td>
+                <td>{{ p.get_type_display }}</td>
+                <td>{{ p.brand }} {{ p.model }}</td>
+                <td>
+                    <span style="
+                        padding: 0.25rem 0.5rem; 
+                        border-radius: 4px; 
+                        background: {% if p.status == 'ACTIVE' %}rgba(74, 222, 128, 0.2){% else %}rgba(248, 113, 113, 0.2){% endif %};
+                        color: {% if p.status == 'ACTIVE' %}#4ade80{% else %}#f87171{% endif %};
+                    ">
+                        {{ p.get_status_display }}
+                    </span>
+                </td>
+                <td>{{ p.connected_to|default:"-" }}</td>
+                <td>{{ p.area.name|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center;">No se encontraron periféricos.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

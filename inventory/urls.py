@@ -10,10 +10,13 @@ urlpatterns = [
     # Frontend URLs
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('inventory/', views.equipment_list_view, name='equipment_list'),
+    path('inventory/equipment/<int:pk>/', views.equipment_detail_view, name='equipment_detail'),
     path('inventory/new/', views.equipment_create_view, name='equipment_create'),
     path('inventory/area/new/', views.area_create_view, name='area_create'),
     path('inventory/costcenter/new/', views.cost_center_create_view, name='cost_center_create'),
     path('maintenance/new/', views.maintenance_create_view, name='maintenance_create'),
+    path('inventory/peripherals/', views.peripheral_list_view, name='peripheral_list'),
+    path('inventory/peripherals/new/', views.peripheral_create_view, name='peripheral_create'),
     path('users/', views.user_list_view, name='user_list'),
     path('users/new/', views.user_create_view, name='user_create'),
 ]

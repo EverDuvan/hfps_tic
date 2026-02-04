@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter
 from .utils import generate_maintenance_pdf, generate_handover_pdf, export_to_excel
 from django.apps import apps
-from .forms import MaintenanceForm, EquipmentForm, AreaForm, CostCenterForm, CustomUserCreationForm
+from .forms import MaintenanceForm, EquipmentForm, AreaForm, CostCenterForm, CustomUserCreationForm, PeripheralForm
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
@@ -185,3 +185,33 @@ def user_create_view(request):
         form = CustomUserCreationForm()
     
     return render(request, 'inventory/user_form.html', {'form': form})
+
+@login_required
+def equipment_detail_view(request, pk):
+    equipment = get_object_or_404(Equipment, pk=pk)
+    maintenances = Maintenance.objects.filter(equipment=equipment).order_by('-date')
+    handovers = Handover.objects.filter(equipment=equipment).order_by('-date')
+    
+    context = {
+        'equipment': equipment,
+        'maintenances': maintenances,
+        'handovers': handovers,
+    }
+    return render(request, 'inventory/equipment_detail.html', context)
+
+@login_required
+def peripheral_list_view(request):
+    peripherals = Peripheral.objects.all().order_by('-id')
+    return render(request, 'inventory/peripheral_list.html', {'peripherals': peripherals})
+
+@login_required
+def peripheral_create_view(request):
+    if request.method == 'POST':
+        form = PeripheralForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('peripheral_list')
+    else:
+        form = PeripheralForm()
+    
+    return render(request, 'inventory/peripheral_form.html', {'form': form})

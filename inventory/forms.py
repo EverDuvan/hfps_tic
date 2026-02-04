@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import Maintenance, Equipment, Area, CostCenter
+from .models import Maintenance, Equipment, Area, CostCenter, Peripheral
 from django.contrib.auth.models import User
 
 class CustomUserCreationForm(UserCreationForm):
@@ -76,3 +76,24 @@ class EquipmentForm(forms.ModelForm):
         for field in self.fields:
             if isinstance(self.fields[field].widget, (forms.TextInput, forms.Textarea, forms.Select, forms.TimeInput, forms.DateInput, forms.NumberInput, forms.EmailInput)):
                 self.fields[field].widget.attrs.update({'class': 'form-control'})
+
+class PeripheralForm(forms.ModelForm):
+    class Meta:
+        model = Peripheral
+        fields = '__all__'
+        widgets = {
+            'type': forms.Select(attrs={'class': 'form-select'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'connected_to': forms.Select(attrs={'class': 'form-select'}), # Searchable via JS ideally, but select for now
+            'area': forms.Select(attrs={'class': 'form-select'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            if hasattr(self.fields[field], 'widget') and hasattr(self.fields[field].widget, 'attrs'):
+                # Add form-control class to all inputs
+                current_classes = self.fields[field].widget.attrs.get('class', '')
+                if 'form-select' not in current_classes:
+                    self.fields[field].widget.attrs['class'] = (current_classes + ' form-control').strip()
+
