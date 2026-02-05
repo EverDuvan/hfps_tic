@@ -496,11 +496,20 @@ def maintenance_schedule_view(request):
                 month_weeks.append({'month': m_num, 'week': w, 'data': data})
             eq.schedule_row.append({'month': m_name, 'weeks': month_weeks})
             
+    # Generate year range: Current year to +20 years
+    current_actual_years = timezone.now().year
+    # If the user selected a past year, we might want to include it, but request is "starting 2026 + 20"
+    # Let's just do a fixed range relative to NOW or ensure selected year is in it.
+    
+    start_year = current_actual_years
+    available_years = range(start_year, start_year + 21)
+
     context = {
         'year': year,
         'months': months,
         'equipments': equipments,
-        'weeks': weeks
+        'weeks': weeks,
+        'available_years': available_years,
     }
     return render(request, 'inventory/maintenance_schedule.html', context)
 
