@@ -64,6 +64,8 @@ def dashboard_view(request):
     active_equipment = Equipment.objects.filter(status='ACTIVE').count()
     maintenance_count = Maintenance.objects.count()
     
+    dashboard_view_handovers = Handover.objects.count()
+    
     recent_maintenance = Maintenance.objects.order_by('-date')[:5]
     recent_handovers = Handover.objects.order_by('-date')[:5]
     
@@ -76,6 +78,7 @@ def dashboard_view(request):
         'total_equipment': total_equipment,
         'active_equipment': active_equipment,
         'maintenance_count': maintenance_count,
+        'handover_count': dashboard_view_handovers,
         'recent_maintenance': recent_maintenance,
         'recent_handovers': recent_handovers,
         'status_data': status_data,
@@ -366,11 +369,15 @@ def handover_create_view(request):
                 handover.technician = request.user
                 handover.save()
                 form.save_m2m() 
-                return redirect('inventory:handover_acta', pk=handover.pk)
+                return redirect('inventory:handover_success', pk=handover.pk)
     else:
         form = HandoverForm()
     
     return render(request, 'inventory/handover_form.html', {'form': form, 'title': 'Nueva Entrega / Acta'})
+
+@login_required
+def handover_success_view(request, pk):
+    return render(request, 'inventory/handover_success.html', {'pk': pk})
 
 @login_required
 def maintenance_list_view(request):
@@ -547,29 +554,74 @@ def toggle_schedule_view(request):
 
 @login_required
 def reports_dashboard_view(request):
-    current_year = timezone.now().year
+    import datetime
+    from django.db.models import Count, Sum
     
-    # 1. Total Equipment
-    total_equipment = Equipment.objects.count()
+    # 1. Date Filtering
+    today = timezone.now().date()
+    start_str = request.GET.get('start_date', '')
+    end_str = request.GET.get('end_date', '')
     
-    # 2. Equipment by Area
-    areas_q = Area.objects.annotate(eq_count=Count('equipments')).filter(eq_count__gt=0)
-    area_labels = [a.name for a in areas_q]
-    area_data = [a.eq_count for a in areas_q]
+    # Defaults: Start of current year to today
+    if not start_str:
+        start_date = today.replace(month=1, day=1)
+    else:
+        try:
+            start_date = datetime.datetime.strptime(start_str, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = today.replace(month=1, day=1)
+            
+    if not end_str:
+        end_date = today
+    else:
+        try:
+            end_date = datetime.datetime.strptime(end_str, '%Y-%m-%d').date()
+        except ValueError:
+            end_date = today
+
+    # 2. Main QuerySets
+    maintenances = Maintenance.objects.filter(date__range=[start_date, end_date])
+    handovers = Handover.objects.filter(date__date__range=[start_date, end_date])
+    equipments = Equipment.objects.all()
+
+    # 3. KPIs
+    total_equipment = equipments.count()
+    active_equipment = equipments.filter(status='ACTIVE').count()
+    maintenance_count = maintenances.count()
+    handover_count = handovers.count()
     
-    # 3. Maintenances this year (Completed)
-    completed_maintenance = Maintenance.objects.filter(date__year=current_year).count()
+    # 4. Charts Data
     
-    # 4. Pending Schedule (This week simplistically or total pending this year)
-    # Let's show total pending for the year to have broader context
-    pending_schedule = MaintenanceSchedule.objects.filter(scheduled_date__year=current_year, status='PENDING').count()
+    # 4.1 Equipment by Type
+    eq_by_type = list(equipments.values('type').annotate(count=Count('type')).order_by('-count'))
+    # Clean up labels from choices? Ideally yes, but values() gives the DB value. 
+    # Validating choice labels in template or via dict mapping if needed. For now DB values are readable enough or we format in template.
     
+    # 4.2 Maintenance by Type
+    m_by_type = list(maintenances.values('maintenance_type').annotate(count=Count('id')))
+    
+    # 4.3 Top Technicians (by maintenance count)
+    top_techs = list(maintenances.values('performed_by__username').annotate(count=Count('id')).order_by('-count')[:5])
+    
+    # 4.4 Equipment Status
+    eq_by_status = list(equipments.values('status').annotate(count=Count('status')))
+
+    # 5. Actionable Lists
+    # Warranty Expiring in next 90 days
+    limit_date = today + datetime.timedelta(days=90)
+    warranty_expiring = equipments.filter(warranty_expiry__range=[today, limit_date]).order_by('warranty_expiry')
+
     context = {
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
         'total_equipment': total_equipment,
-        'area_labels': area_labels,
-        'area_data': area_data,
-        'current_year': current_year,
-        'completed_maintenance': completed_maintenance,
-        'pending_schedule': pending_schedule,
+        'active_equipment': active_equipment,
+        'maintenance_count': maintenance_count,
+        'handover_count': handover_count,
+        'eq_by_type': eq_by_type,
+        'm_by_type': m_by_type,
+        'top_techs': top_techs,
+        'eq_by_status': eq_by_status,
+        'warranty_expiring': warranty_expiring,
     }
     return render(request, 'inventory/reports_dashboard.html', context)

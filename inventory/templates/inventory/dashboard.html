@@ -8,7 +8,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- KPI Cards -->
-<div class="grid-3" style="margin-bottom: 2rem;">
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
     <div class="card" style="border-left: 4px solid var(--primary);">
         <h3>Total Equipos</h3>
         <p style="font-size: 2.5rem; font-weight: 800; color: #1f2937;">{{ total_equipment }}</p>
@@ -20,6 +21,10 @@
     <div class="card" style="border-left: 4px solid #facc15;">
         <h3>Mantenimientos (Histórico)</h3>
         <p style="font-size: 2.5rem; font-weight: 800; color: #ca8a04;">{{ maintenance_count }}</p>
+    </div>
+    <div class="card" style="border-left: 4px solid #a855f7;">
+        <h3>Total Entregas</h3>
+        <p style="font-size: 2.5rem; font-weight: 800; color: #7e22ce;">{{ handover_count }}</p>
     </div>
 </div>
 

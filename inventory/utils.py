@@ -2,7 +2,6 @@ from datetime import time
 import openpyxl
 from django.http import HttpResponse
 from fpdf import FPDF
-from fpdf.enums import XPos, YPos
 import io
 
 def export_to_excel(queryset, model_admin, request):
@@ -36,57 +35,50 @@ def export_to_excel(queryset, model_admin, request):
 
 class PDF(FPDF):
     pass
-    # Custom header/footer moved inside generation function for flexibility with this specific form
 
-def draw_checked_box(pdf, checked, label):
-    # Helper to draw a checkbox [X] Label
+def draw_header(pdf, title, doc_code, date_obj):
+    # Generic Header
     pdf.set_font("Arial", size=8)
-    x = pdf.get_x()
-    y = pdf.get_y()
-    pdf.rect(x, y, 4, 4)
-    if checked:
-        pdf.text(x+1, y+3, "X")
-    pdf.set_xy(x + 5, y)
-    pdf.cell(40, 4, label)
-    pdf.ln(5)
-
-def generate_maintenance_pdf(m):
-    pdf = PDF(orientation='P', unit='mm', format='A4')
-    pdf.add_page()
-    pdf.set_font("Arial", size=8)
-    
-    # --- Header ---
-    # Widths: Logo area, Title, Code block
-    # Approximating roughly: 30, 110, 50
-    
     start_y = pdf.get_y()
     
-    # Logo Placeholder
-    pdf.cell(30, 20, "HFPS", border=1, align='C') 
+    # Logo (Left) - using the hfps.jpg
+    # Assuming static files are collected or accessible. For development, we might need absolute path or find static file.
+    import os
+    from django.conf import settings
     
-    # Title
+    logo_path = os.path.join(settings.BASE_DIR, 'inventory', 'static', 'img', 'hfps.jpg')
+    # Fallback to root static if not found there (since we moved it to root static/img)
+    if not os.path.exists(logo_path):
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'hfps.jpg')
+
+    if os.path.exists(logo_path):
+        pdf.image(logo_path, x=10, y=start_y, w=30, h=20)
+    else:
+        # Fallback if image not found
+        pdf.cell(30, 20, "HFPS", border=1, align='C') 
+    
+    # Title (Center)
     current_x = pdf.get_x()
-    current_y = pdf.get_y()
     pdf.set_xy(current_x, start_y)
     pdf.set_font("Arial", 'B', 10)
-    pdf.multi_cell(110, 10, "MANTENIMIENTO PREVENTIVO Y CORRECTIVO \nEQUIPOS DE COMPUTO", border=1, align='C')
+    pdf.multi_cell(110, 20, title, border=1, align='C') # 20 height to match logo
     
-    # Code block
+    # Code/Date Block (Right)
     current_x += 110
     pdf.set_xy(current_x, start_y)
     pdf.set_font("Arial", size=8)
     
-    # Nested cells for code block
-    pdf.cell(50, 5, "Código: FR-GT-03 Versión: 01", border=1, ln=1)
+    # Code
+    pdf.cell(50, 5, f"Codigo: {doc_code}", border=1, ln=1)
     pdf.set_x(current_x)
     
-    # Date logic
-    date_str = m.date.strftime('%Y-%m-%d')
-    day = m.date.day
-    month = m.date.month
-    year = m.date.year
+    # Date parts
+    date_str = date_obj.strftime('%Y-%m-%d')
+    day = date_obj.day
+    month = date_obj.month
+    year = date_obj.year
     
-    pdf.cell(50, 5, "Fecha de elaboración:", border=1, ln=1)
+    pdf.cell(50, 5, "Fecha de elaboracion:", border=1, ln=1)
     pdf.set_x(current_x)
     pdf.cell(16, 5, "DD", border=1, align='C')
     pdf.cell(17, 5, "MM", border=1, align='C')
@@ -96,123 +88,99 @@ def generate_maintenance_pdf(m):
     pdf.cell(17, 5, str(month), border=1, align='C')
     pdf.cell(17, 5, str(year), border=1, ln=1, align='C')
     
-    pdf.set_y(start_y + 20)
-    pdf.ln(2)
+    pdf.set_y(start_y + 25) # Move down past header
 
-    # --- 1. DATOS DEL EQUIPO ---
+def draw_section_title(pdf, title):
     pdf.set_fill_color(220, 220, 220)
     pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 5, "1. DATOS DEL EQUIPO", border=1, ln=1, fill=True)
-    
+    pdf.cell(0, 6, title, border=1, ln=1, fill=True)
     pdf.set_font("Arial", size=8)
-    pdf.cell(30, 5, "Propiedad:", border=1)
-    pdf.cell(30, 5, "HFPS", border=1)
-    pdf.cell(30, 5, "Tipo adquisición:", border=1)
-    pdf.cell(30, 5, "Propio", border=1)
-    pdf.cell(20, 5, "Estado:", border=1)
-    pdf.cell(50, 5, m.equipment.get_status_display(), border=1, ln=1)
+
+def draw_field(pdf, label, value, width_label=30, width_value=60, ln=0):
+    pdf.set_font("Arial", 'B', 8)
+    pdf.cell(width_label, 5, label, border=1)
+    pdf.set_font("Arial", size=8)
+    pdf.cell(width_value, 5, str(value) if value else "", border=1, ln=ln)
+
+def generate_maintenance_pdf(m):
+    pdf = PDF(orientation='P', unit='mm', format='A4')
+    pdf.add_page()
     
-    pdf.cell(30, 5, "No. Serie (S/N):", border=1)
-    pdf.cell(60, 5, m.equipment.serial_number, border=1)
-    pdf.cell(30, 5, "Nombre Equipo:", border=1)
-    pdf.cell(70, 5, f"{m.equipment.brand} {m.equipment.model}", border=1, ln=1)
+    draw_header(pdf, "MANTENIMIENTO PREVENTIVO Y CORRECTIVO \nEQUIPOS DE COMPUTO", "FR-GT-03 V.01", m.date)
+
+    # ... 1. DATOS DEL EQUIPO ...
+    draw_section_title(pdf, "1. DATOS DEL EQUIPO")
+    draw_field(pdf, "Propiedad:", "HFPS", 30, 30)
+    draw_field(pdf, "Tipo adquisicion:", "Propio", 30, 30)
+    draw_field(pdf, "Estado:", m.equipment.get_status_display(), 20, 50, ln=1)
     
-    pdf.cell(30, 5, "NomUsuarioSO:", border=1)
-    pdf.cell(60, 5, m.equipment.os_user or "", border=1)
-    pdf.cell(100, 5, "", border=1, ln=1) # Empty space filler
+    draw_field(pdf, "No. Serie (S/N):", m.equipment.serial_number, 30, 60)
+    draw_field(pdf, "Nombre Equipo:", f"{m.equipment.brand} {m.equipment.model}", 30, 70, ln=1)
+    
+    draw_field(pdf, "NomUsuarioSO:", m.equipment.os_user or "", 30, 60)
+    pdf.cell(100, 5, "", border=1, ln=1) # Spacer
 
     pdf.ln(2)
 
-    # --- 2. INFORMACION CENTRO DE COSTOS ---
-    pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 5, "2. INFORMACION CENTRO DE COSTOS", border=1, ln=1, fill=True)
-    
+    # ... 2. CENTRO COSTOS ...
+    draw_section_title(pdf, "2. INFORMACION CENTRO DE COSTOS")
     area = m.equipment.area
     cc = area.cost_center if area and area.cost_center else None
     
-    pdf.set_font("Arial", size=8)
-    pdf.cell(40, 5, "Centro De Costos:", border=1)
-    pdf.cell(150, 5, f"{cc.code} - {cc.name}" if cc else "N/A", border=1, ln=1)
+    draw_field(pdf, "Centro De Costos:", f"{cc.code} - {cc.name}" if cc else "N/A", 40, 150, ln=1)
+    draw_field(pdf, "Ubicacion Default:", area.name if area else "N/A", 40, 150, ln=1)
+    draw_field(pdf, "Proceso/Area:", area.description or area.name if area else "", 40, 150, ln=1)
     
-    pdf.cell(40, 5, "Ubicación Predeterminada:", border=1)
-    pdf.cell(150, 5, area.name if area else "N/A", border=1, ln=1)
-    
-    pdf.cell(40, 5, "Nombre Proceso/Área:", border=1)
-    pdf.cell(150, 5, area.description or area.name if area else "", border=1, ln=1)
-
     pdf.ln(2)
-
-    # --- 3. CONFIGURACION DEL EQUIPO ---
-    pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 5, "3. CONFIGURACION DEL EQUIPO", border=1, ln=1, fill=True)
     
-    pdf.set_font("Arial", size=8)
-    # Row 1
-    pdf.cell(30, 5, "Tipo de Equipo:", border=1)
-    pdf.cell(40, 5, m.equipment.get_type_display(), border=1)
-    pdf.cell(20, 5, "Marca:", border=1)
-    pdf.cell(40, 5, m.equipment.brand, border=1)
-    pdf.cell(20, 5, "Modelo:", border=1)
-    pdf.cell(40, 5, m.equipment.model, border=1, ln=1)
+    # ... 3. CONFIGURACION ...
+    draw_section_title(pdf, "3. CONFIGURACION DEL EQUIPO")
+    draw_field(pdf, "Tipo de Equipo:", m.equipment.get_type_display(), 30, 40)
+    draw_field(pdf, "Marca:", m.equipment.brand, 20, 40)
+    draw_field(pdf, "Modelo:", m.equipment.model, 20, 40, ln=1)
     
-    # Row 2
-    pdf.cell(30, 5, "Voltaje:", border=1)
-    pdf.cell(40, 5, m.equipment.voltage or "", border=1)
-    pdf.cell(20, 5, "Amperaje:", border=1)
-    pdf.cell(40, 5, m.equipment.amperage or "", border=1)
-    pdf.cell(20, 5, "Sist. Operativo:", border=1)
-    pdf.cell(40, 5, m.equipment.operating_system or "", border=1, ln=1)
+    draw_field(pdf, "Voltaje:", m.equipment.voltage, 30, 40)
+    draw_field(pdf, "Amperaje:", m.equipment.amperage, 20, 40)
+    draw_field(pdf, "Sist. Operativo:", m.equipment.operating_system, 20, 40, ln=1)
     
-    # Row 3
-    pdf.cell(40, 5, "Tamaño Pantalla (AiO/Laptop):", border=1)
-    pdf.cell(150, 5, m.equipment.screen_size or "", border=1, ln=1)
+    draw_field(pdf, "Tamano Pantalla:", m.equipment.screen_size, 40, 150, ln=1)
     
     pdf.ln(2)
 
-    # --- 4. TIPO DE SOPORTE REQUERIDO ---
-    pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 5, "4. TIPO DE SOPORTE REQUERIDO", border=1, ln=1, fill=True)
-    
-    # Grid of checkboxes. 4 columns.
+    # ... 4. SUPPORT ...
+    draw_section_title(pdf, "4. TIPO DE SOPORTE REQUERIDO")
+    # ... logic for checkboxes ...
+    # Keep existing logic for checkboxes but clean up if needed.
     pdf.set_font("Arial", size=8)
-    pdf.cell(47, 5, f"[ {'X' if m.type_review else ' '} ] REVISIÓN DE EQUIPO", border=1)
+    pdf.cell(47, 5, f"[ {'X' if m.type_review else ' '} ] REVISION DE EQUIPO", border=1)
     pdf.cell(47, 5, f"[ {'X' if m.type_software_failure else ' '} ] FALLAS CON SOFTWARE", border=1)
-    pdf.cell(47, 5, f"[ {'X' if m.type_connection else ' '} ] PROBLEMAS CONEXIÓN", border=1)
+    pdf.cell(47, 5, f"[ {'X' if m.type_connection else ' '} ] PROBLEMAS CONEXION", border=1)
     pdf.cell(49, 5, f"[ {'X' if m.type_updates else ' '} ] ACTUALIZACIONES WIN10", border=1, ln=1)
 
     pdf.cell(47, 5, f"[ {'X' if m.type_cleaning else ' '} ] LIMPIEZA EQUIPO", border=1)
-    pdf.cell(47, 5, f"[ {'X' if m.type_install else ' '} ] INSTALACIÓN SOFTWARE", border=1)
-    pdf.cell(47, 5, f"[ {'X' if m.type_peripheral else ' '} ] FALLA PERIFÉRICOS", border=1)
+    pdf.cell(47, 5, f"[ {'X' if m.type_install else ' '} ] INSTALACION SOFTWARE", border=1)
+    pdf.cell(47, 5, f"[ {'X' if m.type_peripheral else ' '} ] FALLA PERIFERICOS", border=1)
     pdf.cell(49, 5, f"[ {'X' if m.type_backup else ' '} ] COPIA SEGURIDAD", border=1, ln=1)
 
     pdf.ln(2)
     
-    # --- 5. ACTIVIDADES DE LIMPIEZA AL S.O. ---
-    pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 5, "5. ACTIVIDADES DE LIMPIEZA AL SISTEMA OPERATIVO", border=1, ln=1, fill=True)
-    
-    pdf.set_font("Arial", size=8)
-    pdf.cell(95, 5, f"[ {'X' if m.cleaning_defrag else ' '} ] DESFRAGMENTACIÓN DISCO DURO", border=1)
-    pdf.cell(95, 5, f"[ {'X' if m.cleaning_cco else ' '} ] EJECUCIÓN C-CLEANER", border=1, ln=1)
+    # ... 5. CLEANING ...
+    draw_section_title(pdf, "5. ACTIVIDADES DE LIMPIEZA AL SISTEMA OPERATIVO")
+    pdf.cell(95, 5, f"[ {'X' if m.cleaning_defrag else ' '} ] DESFRAGMENTACION DISCO DURO", border=1)
+    pdf.cell(95, 5, f"[ {'X' if m.cleaning_cco else ' '} ] EJECUCION C-CLEANER", border=1, ln=1)
     pdf.cell(95, 5, f"[ {'X' if m.cleaning_scandisk else ' '} ] SCANDISK", border=1)
-    pdf.cell(95, 5, f"[ {'X' if m.cleaning_space else ' '} ] LIBERACIÓN DE ESPACIO", border=1, ln=1)
-
+    pdf.cell(95, 5, f"[ {'X' if m.cleaning_space else ' '} ] LIBERACION DE ESPACIO", border=1, ln=1)
+    
     pdf.ln(2)
 
-    # --- 6. OBSERVACIONES ---
-    pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 5, "6. OBSERVACIONES DEL EQUIPO ANTES DEL MANTENIMIENTO", border=1, ln=1, fill=True)
-    pdf.set_font("Arial", size=8)
+    # ... 6. OBSERVATIONS ...
+    draw_section_title(pdf, "6. OBSERVACIONES DEL EQUIPO ANTES DEL MANTENIMIENTO")
     pdf.multi_cell(0, 5, m.description or "N/A", border=1)
     
     pdf.ln(2)
-
-    # --- 7. ETAPAS DEL MANTENIMIENTO HARDWARE ---
-    pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 5, "7. ETAPAS DEL MANTENIMIENTO DEL HARDWARE", border=1, ln=1, fill=True)
     
-    pdf.set_font("Arial", size=8)
-    # List of hardware tasks
+    # ... 7. HARDWARE ...
+    draw_section_title(pdf, "7. ETAPAS DEL MANTENIMIENTO DEL HARDWARE")
     hw_tasks = [
         ("Retiro del equipo / Desmontaje", m.hw_disassembly),
         ("Limpieza Fuente de Poder", m.hw_power_supply),
@@ -224,137 +192,159 @@ def generate_maintenance_pdf(m):
         ("Limpieza Monitor/Pantalla", m.hw_screen),
         ("Ensamble y Pruebas", m.hw_reassembly)
     ]
-    
     for task, checked in hw_tasks:
         pdf.cell(95, 5, task, border=1)
         pdf.cell(20, 5, "REALIZADO" if checked else "N/A", border=1, align='C', ln=1)
 
     pdf.ln(5)
     
-    # --- FOOTER / SIGNATURES ---
-    pdf.set_font("Arial", 'B', 9)
+    # FOOTER
+    draw_section_title(pdf, "ESTADO FINAL Y TIEMPOS")
     pdf.cell(40, 5, "ESTADO FINAL:", border=1)
-    pdf.set_font("Arial", size=9)
-    pdf.cell(150, 5, "EQUIPO EN FUNCIONAMIENTO" if m.equipment.status == 'ACTIVE' else m.equipment.get_status_display(), border=1, ln=1)
+    pdf.cell(150, 5, m.equipment.get_status_display(), border=1, ln=1)
     
     start_time = m.start_time.strftime('%H:%M') if m.start_time else "  :  "
     end_time = m.end_time.strftime('%H:%M') if m.end_time else "  :  "
-    
     pdf.cell(40, 5, "HORA INICIO:", border=1)
     pdf.cell(55, 5, start_time, border=1)
     pdf.cell(40, 5, "HORA FINAL:", border=1)
     pdf.cell(55, 5, end_time, border=1, ln=1)
-    
+
     pdf.ln(10)
-    
+
     # Signatures
     y_sig = pdf.get_y()
-    
-    # User / Received By
     pdf.line(10, y_sig + 15, 90, y_sig + 15)
     pdf.set_xy(10, y_sig + 16)
     pdf.cell(80, 5, "NOMBRE USUARIO / RECIBIDO POR", align='C', ln=1)
     
-    # Technician
     pdf.line(110, y_sig + 15, 190, y_sig + 15)
     pdf.set_xy(110, y_sig + 16)
-    tech_name = m.performed_by.get_full_name() if m.performed_by else "TÉCNICO"
+    tech_name = m.performed_by.get_full_name() if m.performed_by else "TECNICO"
     pdf.cell(80, 5, tech_name, align='C', ln=1)
     pdf.set_x(110)
-    pdf.cell(80, 5, "SOPORTE TÉCNICO - TIC", align='C', ln=1)
+    pdf.cell(80, 5, "SOPORTE TECNICO - TIC", align='C', ln=1)
 
     output = io.BytesIO()
     pdf.output(output)
     return output.getvalue()
 
+
 def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
-    pdf = PDF()
+    pdf = PDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
     
-    pdf.cell(0, 10, f"Acta de Entrega #{handover.id}", ln=True, align='C')
-    pdf.ln(10)
-    
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, "Fecha:", 0)
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 10, handover.date.strftime('%Y-%m-%d %H:%M'), ln=True)
-    
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, "Tipo:", 0)
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 10, handover.get_type_display(), ln=True)
-    
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, "Origen:", 0)
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 10, str(handover.source_area) if handover.source_area else "N/A", ln=True)
+    draw_header(pdf, "ACTA DE ENTREGA / ASIGNACION\nEQUIPOS DE COMPUTO Y PERIFERICOS", "FR-GT-04 V.01", handover.date)
 
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, "Destino:", 0)
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 10, str(handover.destination_area) if handover.destination_area else "N/A", ln=True)
-
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, "Recibido por:", 0)
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 10, handover.receiver_name or "N/A", ln=True)
-
+    # ... 1. DATOS DE LA ENTREGA ...
+    draw_section_title(pdf, "1. INFORMACION DE LA ENTREGA")
+    
+    draw_field(pdf, "Tipo de Entrega:", handover.get_type_display(), 40, 150, ln=1)
+    draw_field(pdf, "Area Origen:", str(handover.source_area), 40, 55)
+    draw_field(pdf, "Area Destino:", str(handover.destination_area), 40, 55, ln=1)
+    
+    # Client Info
     if handover.client:
-        pdf.ln(5)
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(40, 10, "Cliente:", 0)
-        pdf.set_font("Arial", '', 12)
-        pdf.cell(0, 10, f"{handover.client.name} (ID: {handover.client.identification})", ln=True)
+        draw_field(pdf, "Funcionario/Cliente:", handover.client.name, 40, 150, ln=1)
+        draw_field(pdf, "Identificacion:", handover.client.identification, 40, 55)
+        draw_field(pdf, "Cargo/Correo:", handover.client.email or "", 40, 55, ln=1)
+    else:
+        draw_field(pdf, "Recibido Por (Nombre):", handover.receiver_name or "N/A", 40, 150, ln=1)
 
-    pdf.ln(5)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, "Equipos:", ln=True)
-    pdf.set_font("Arial", '', 12)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, "Equipos:", ln=True)
-    pdf.set_font("Arial", '', 12)
+    pdf.ln(2)
+
+    # ... 2. EQUIPOS ...
+    draw_section_title(pdf, "2. EQUIPOS RELACIONADOS")
     
-    # Use provided list or fallback to relation
+    # Checkbox header? Or just a table
+    pdf.set_font("Arial", 'B', 8)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(30, 6, "TIPO", border=1, fill=True)
+    pdf.cell(40, 6, "MARCA", border=1, fill=True)
+    pdf.cell(50, 6, "MODELO", border=1, fill=True)
+    pdf.cell(70, 6, "SERIAL / CODIGO", border=1, ln=1, fill=True)
+    
+    pdf.set_font("Arial", size=8)
+    
     final_equipment = equipment_list if equipment_list is not None else handover.equipment.all()
     
-    for eq in final_equipment:
-         pdf.cell(0, 10, f"- {eq}", ln=True)
+    if not final_equipment:
+        pdf.cell(190, 6, "No aplica / Ninguno", border=1, ln=1, align='C')
+    else:
+        for eq in final_equipment:
+            pdf.cell(30, 6, eq.get_type_display()[:15], border=1)
+            pdf.cell(40, 6, eq.brand[:20], border=1)
+            pdf.cell(50, 6, eq.model[:25], border=1)
+            pdf.cell(70, 6, eq.serial_number, border=1, ln=1)
 
-    # Use provided list or fallback to relation
+    pdf.ln(2)
+
+    # ... 3. PERIFERICOS ...
+    draw_section_title(pdf, "3. PERIFERICOS / ACCESORIOS")
+    
+    pdf.set_font("Arial", 'B', 8)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(30, 6, "TIPO", border=1, fill=True)
+    pdf.cell(40, 6, "MARCA", border=1, fill=True)
+    pdf.cell(50, 6, "MODELO", border=1, fill=True)
+    pdf.cell(70, 6, "SERIAL / ESTADO", border=1, ln=1, fill=True) # Peripherals might not have serials always
+    
+    pdf.set_font("Arial", size=8)
+    
     final_peripherals = peripheral_list if peripheral_list is not None else handover.peripherals.all()
-
-    if len(final_peripherals) > 0:
-        pdf.ln(5)
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 10, "Periféricos:", ln=True)
-        pdf.set_font("Arial", '', 12)
+    
+    if not final_peripherals:
+         pdf.cell(190, 6, "No aplica / Ninguno", border=1, ln=1, align='C')
+    else:
         for p in final_peripherals:
-             pdf.cell(0, 10, f"- {p}", ln=True)
+            serial = p.serial_number if p.serial_number else p.get_status_display()
+            pdf.cell(30, 6, p.get_type_display()[:15], border=1)
+            pdf.cell(40, 6, p.brand[:20], border=1)
+            pdf.cell(50, 6, p.model[:25], border=1)
+            pdf.cell(70, 6, serial, border=1, ln=1)
 
-    if handover.observations:
-        pdf.ln(5)
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 10, "Observaciones:", ln=True)
-        pdf.set_font("Arial", '', 12)
-        pdf.multi_cell(0, 10, handover.observations)
+    pdf.ln(2)
+    
+    # ... 4. OBSERVACIONES ...
+    draw_section_title(pdf, "4. OBSERVACIONES")
+    pdf.multi_cell(0, 5, handover.observations or "Sin observaciones adicionales.", border=1)
+    
+    pdf.ln(20) # Space for signatures
 
-    pdf.ln(5)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, "Técnico:", 0)
-    pdf.set_font("Arial", '', 12)
-    tech_name = handover.technician.get_full_name() if handover.technician else "N/A"
-    if not tech_name and handover.technician:
-        tech_name = handover.technician.username
-    pdf.cell(0, 10, tech_name, ln=True)
+    # Signatures
+    y_sig = pdf.get_y()
     
-    pdf.ln(20)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, "Firmas:", ln=True)
-    pdf.ln(20)
-    pdf.cell(90, 10, "Entregado por: __________________", 0)
-    pdf.cell(90, 10, "Recibido por: __________________", ln=True)
+    # Check if page break needed
+    if y_sig > 250:
+        pdf.add_page()
+        y_sig = pdf.get_y() + 20
     
+    # Area de firmas
+    pdf.set_font("Arial", 'B', 8)
+    
+    # Left: Deliverer (Technician usually)
+    pdf.line(20, y_sig, 90, y_sig)
+    pdf.set_xy(20, y_sig + 1)
+    tech_name = handover.technician.get_full_name() if handover.technician else "TECNICO / RESPONSABLE"
+    pdf.cell(70, 5, "ENTREGADO POR:", align='C', ln=1)
+    pdf.set_x(20)
+    pdf.set_font("Arial", '', 8)
+    pdf.cell(70, 5, tech_name, align='C', ln=1)
+    
+    # Right: Receiver
+    pdf.line(120, y_sig, 190, y_sig)
+    pdf.set_xy(120, y_sig + 1)
+    pdf.set_font("Arial", 'B', 8)
+    pdf.cell(70, 5, "RECIBIDO POR:", align='C', ln=1)
+    
+    receiver_label = handover.receiver_name
+    if handover.client:
+        receiver_label = handover.client.name
+        
+    pdf.set_x(120)
+    pdf.set_font("Arial", '', 8)
+    pdf.cell(70, 5, receiver_label or "_________", align='C', ln=1)
+
     output = io.BytesIO()
     pdf.output(output)
     return output.getvalue()

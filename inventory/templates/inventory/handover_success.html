@@ -1,0 +1,33 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Acta Generada{% endblock %}
+{% block page_title %}Acta de Entrega Generada Exitosamente{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 2rem auto; text-align: center; padding: 3rem;">
+    <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+    <h2 style="color: #111827; margin-bottom: 1rem;">¡Entrega Registrada!</h2>
+    <p style="color: #6b7280; margin-bottom: 2rem;">
+        El acta de entrega #{{ pk }} se ha generado correctamente.
+        <br>
+        El PDF se abrirá automáticamente en una nueva pestaña.
+    </p>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="{% url 'inventory:handover_acta' pk %}" target="_blank" class="btn btn-primary" id="open-pdf-btn">
+            📄 Abrir PDF Manualmente
+        </a>
+        <a href="{% url 'inventory:handover_list' %}" class="btn" style="background-color: #6b7280; color: white;">
+            🔙 Volver al Historial
+        </a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Automatically open the PDF in a new tab
+        const url = "{% url 'inventory:handover_acta' pk %}";
+        window.open(url, '_blank');
+    });
+</script>
+{% endblock %}

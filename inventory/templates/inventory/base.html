@@ -13,7 +13,10 @@
 <body>
 
     <nav class="sidebar">
-        <a href="{% url 'inventory:dashboard' %}" class="brand" style="text-decoration: none;">HFPS TIC</a>
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <img src="{% static 'img/hfps.jpg' %}" alt="HFPS Logo"
+                style="max-width: 80%; height: auto; border-radius: 8px;">
+        </div>
         <div class="nav-links">
             <a href="{% url 'inventory:dashboard' %}"
                 class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">

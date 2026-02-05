@@ -6,6 +6,10 @@
 {% block content %}
 <div style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
     <div class="card" style="max-width: 400px; width: 100%; padding: 2rem;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            {% load static %}
+            <img src="{% static 'img/hfps.jpg' %}" alt="HFPS Logo" style="max-width: 150px; height: auto;">
+        </div>
         <h2 style="text-align: center; margin-bottom: 2rem; color: #1e3a8a;">Iniciar Sesión</h2>
         <form method="post">
             {% csrf_token %}

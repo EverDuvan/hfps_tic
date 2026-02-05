@@ -60,7 +60,13 @@
                     <td>{{ handover.client.name }}</td>
                     <td>{{ handover.get_type_display }}</td>
                     <td>{{ handover.equipment.count }}</td>
-                    <td>{{ handover.technician.get_full_name|default:handover.technician.username }}</td>
+                    <td>
+                        {% if handover.technician %}
+                        {{ handover.technician.get_full_name|default:handover.technician.username }}
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
                     <td>
                         <a href="{% url 'inventory:handover_acta' handover.pk %}" class="btn" target="_blank"
                             style="padding: 0.25rem 0.6rem; font-size: 0.8rem; background-color: #6b7280; color: white;">

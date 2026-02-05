@@ -26,6 +26,7 @@ urlpatterns = [
     path('maintenance/new/', views.maintenance_create_view, name='maintenance_create'),
     path('clients/new/', views.client_create_view, name='client_create'),
     path('handovers/new/', views.handover_create_view, name='handover_create'),
+    path('handovers/<int:pk>/success/', views.handover_success_view, name='handover_success'),
     path('handovers/', views.handover_list_view, name='handover_list'),
     path('handovers/', views.handover_list_view, name='handover_list'),
     path('maintenance/', views.maintenance_list_view, name='maintenance_list'),
