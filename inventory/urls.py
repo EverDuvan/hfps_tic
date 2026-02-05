@@ -1,5 +1,8 @@
 from django.urls import path
+
 from . import views
+
+app_name = 'inventory'
 
 urlpatterns = [
     path('', views.dashboard_view, name='home'),
@@ -23,6 +26,8 @@ urlpatterns = [
     path('maintenance/new/', views.maintenance_create_view, name='maintenance_create'),
     path('clients/new/', views.client_create_view, name='client_create'),
     path('handovers/new/', views.handover_create_view, name='handover_create'),
+    path('handovers/', views.handover_list_view, name='handover_list'),
+    path('maintenance/', views.maintenance_list_view, name='maintenance_list'),
     path('inventory/peripherals/', views.peripheral_list_view, name='peripheral_list'),
     path('inventory/peripherals/<int:pk>/', views.peripheral_detail_view, name='peripheral_detail'),
     path('inventory/peripherals/<int:pk>/edit/', views.peripheral_edit_view, name='peripheral_edit'),

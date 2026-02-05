@@ -9,9 +9,14 @@
         <div class="search-bar">
             <!-- Search implementation skipped for simplicity in this iteration -->
         </div>
-        <a href="{% url 'cost_center_create' %}?next={% url 'cost_center_list' %}" class="btn btn-primary">
-            ➕ Nuevo Centro de Costos
-        </a>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{% url 'inventory:export_data' 'costcenter' %}" class="btn"
+                style="background-color: #10b981; color: white;">Exportar Excel</a>
+            <a href="{% url 'inventory:cost_center_create' %}?next={% url 'inventory:cost_center_list' %}"
+                class="btn btn-primary">
+                ➕ Nuevo Centro de Costos
+            </a>
+        </div>
     </div>
 
     <div class="table-container">
@@ -29,7 +34,7 @@
                     <td style="font-weight: 500; color: #111827;">{{ cc.code }}</td>
                     <td>{{ cc.name }}</td>
                     <td>
-                        <a href="{% url 'cost_center_edit' cc.pk %}" class="btn"
+                        <a href="{% url 'inventory:cost_center_edit' cc.pk %}" class="btn"
                             style="padding: 0.25rem 0.6rem; font-size: 0.8rem; background-color: #3b82f6;">
                             ✏️
                         </a>

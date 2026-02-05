@@ -13,38 +13,38 @@
 <body>
 
     <nav class="sidebar">
-        <a href="{% url 'dashboard' %}" class="brand" style="text-decoration: none;">HFPS TIC</a>
+        <a href="{% url 'inventory:dashboard' %}" class="brand" style="text-decoration: none;">HFPS TIC</a>
         <div class="nav-links">
-            <a href="{% url 'dashboard' %}"
+            <a href="{% url 'inventory:dashboard' %}"
                 class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 📊 Dashboard
             </a>
-            <a href="{% url 'equipment_list' %}"
+            <a href="{% url 'inventory:equipment_list' %}"
                 class="{% if request.resolver_match.url_name == 'equipment_list' %}active{% endif %}">
                 📦 Inventario
             </a>
-            <a href="{% url 'maintenance_create' %}"
-                class="{% if request.resolver_match.url_name == 'maintenance_create' %}active{% endif %}">
-                🛠️ Nuevo Mantenimiento
+            <a href="{% url 'inventory:maintenance_list' %}"
+                class="{% if request.resolver_match.url_name == 'maintenance_list' or request.resolver_match.url_name == 'maintenance_create' %}active{% endif %}">
+                🛠️ Mantenimiento
             </a>
-            <a href="{% url 'handover_create' %}"
-                class="{% if request.resolver_match.url_name == 'handover_create' %}active{% endif %}">
-                📝 Nueva Entrega
+            <a href="{% url 'inventory:handover_list' %}"
+                class="{% if request.resolver_match.url_name == 'handover_list' or request.resolver_match.url_name == 'handover_create' %}active{% endif %}">
+                📝 Entregas
             </a>
-            <a href="{% url 'peripheral_list' %}"
+            <a href="{% url 'inventory:peripheral_list' %}"
                 class="{% if request.resolver_match.url_name == 'peripheral_list' or request.resolver_match.url_name == 'peripheral_detail' %}active{% endif %}">
                 🖱️ Periféricos
             </a>
-            <a href="{% url 'area_list' %}"
+            <a href="{% url 'inventory:area_list' %}"
                 class="{% if request.resolver_match.url_name == 'area_list' or request.resolver_match.url_name == 'area_edit' %}active{% endif %}">
                 🏢 Áreas
             </a>
-            <a href="{% url 'cost_center_list' %}"
+            <a href="{% url 'inventory:cost_center_list' %}"
                 class="{% if request.resolver_match.url_name == 'cost_center_list' or request.resolver_match.url_name == 'cost_center_edit' %}active{% endif %}">
                 💰 Centros de Costos
             </a>
             {% if user.is_staff %}
-            <a href="{% url 'user_list' %}" class="{% if 'users' in request.path %}active{% endif %}">
+            <a href="{% url 'inventory:user_list' %}" class="{% if 'users' in request.path %}active{% endif %}">
                 👥 Usuarios
             </a>
             {% endif %}

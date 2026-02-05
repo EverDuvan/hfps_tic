@@ -11,7 +11,11 @@
                 value="{{ search_query }}">
             <button type="submit" class="btn btn-primary" style="margin-top: 0;">Buscar</button>
         </form>
-        <a href="{% url 'peripheral_create' %}" class="btn btn-primary">Agregar Periférico</a>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{% url 'inventory:export_data' 'peripheral' %}" class="btn"
+                style="background-color: #10b981; color: white;">Exportar Excel</a>
+            <a href="{% url 'inventory:peripheral_create' %}" class="btn btn-primary">Agregar Periférico</a>
+        </div>
     </div>
 </div>
 
@@ -46,7 +50,7 @@
                 </td>
                 <td>
                     {% if p.connected_to %}
-                    <a href="{% url 'equipment_detail' p.connected_to.pk %}" style="color: #3b82f6;">{{
+                    <a href="{% url 'inventory:equipment_detail' p.connected_to.pk %}" style="color: #3b82f6;">{{
                         p.connected_to.serial_number }}</a>
                     {% else %}
                     -
@@ -54,7 +58,7 @@
                 </td>
                 <td>{{ p.area.name|default:"-" }}</td>
                 <td>
-                    <a href="{% url 'peripheral_detail' p.pk %}" class="btn"
+                    <a href="{% url 'inventory:peripheral_detail' p.pk %}" class="btn"
                         style="font-size: 0.8rem; padding: 0.25rem 0.5rem; text-decoration: none;">Ver</a>
                 </td>
             </tr>

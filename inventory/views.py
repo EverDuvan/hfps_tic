@@ -15,12 +15,12 @@ def maintenance_acta_view(request, pk):
     maintenance = get_object_or_404(Maintenance, pk=pk)
     
     if maintenance.acta_pdf:
-        return FileResponse(maintenance.acta_pdf, as_attachment=True, filename=f"acta_mantenimiento_{pk}.pdf")
+        return FileResponse(maintenance.acta_pdf, as_attachment=False, filename=f"acta_mantenimiento_{pk}.pdf")
     
     # Fallback if PDF not generated yet
     pdf_content = generate_maintenance_pdf(maintenance)
     response = HttpResponse(pdf_content, content_type='application/pdf')
-    response['Content-Disposition'] = f'filename="acta_mantenimiento_{pk}.pdf"'
+    response['Content-Disposition'] = f'inline; filename="acta_mantenimiento_{pk}.pdf"'
     return response
 
 @login_required
@@ -28,11 +28,11 @@ def handover_acta_view(request, pk):
     handover = get_object_or_404(Handover, pk=pk)
     
     if handover.acta_pdf:
-        return FileResponse(handover.acta_pdf, as_attachment=True, filename=f"acta_entrega_{pk}.pdf")
+        return FileResponse(handover.acta_pdf, as_attachment=False, filename=f"acta_entrega_{pk}.pdf")
 
     pdf_content = generate_handover_pdf(handover)
     response = HttpResponse(pdf_content, content_type='application/pdf')
-    response['Content-Disposition'] = f'filename="acta_entrega_{pk}.pdf"'
+    response['Content-Disposition'] = f'inline; filename="acta_entrega_{pk}.pdf"'
     return response
 
 @login_required
@@ -84,6 +84,10 @@ def dashboard_view(request):
 @login_required
 def equipment_list_view(request):
     query = request.GET.get('q', '')
+    area_id = request.GET.get('area', '')
+    status = request.GET.get('status', '')
+    eq_type = request.GET.get('type', '')
+
     equipments_list = Equipment.objects.all().order_by('-created_at')
     
     if query:
@@ -94,11 +98,31 @@ def equipment_list_view(request):
             Q(ip_address__icontains=query)
         )
     
+    if area_id:
+        equipments_list = equipments_list.filter(area_id=area_id)
+    if status:
+        equipments_list = equipments_list.filter(status=status)
+    if eq_type:
+        equipments_list = equipments_list.filter(type=eq_type)
+    
     paginator = Paginator(equipments_list, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    areas = Area.objects.all()
+    from .choices import EQUIPMENT_STATUS_CHOICES, EQUIPMENT_TYPE_CHOICES
         
-    return render(request, 'inventory/equipment_list.html', {'page_obj': page_obj, 'search_query': query})
+    context = {
+        'page_obj': page_obj, 
+        'search_query': query,
+        'areas': areas,
+        'status_choices': EQUIPMENT_STATUS_CHOICES,
+        'type_choices': EQUIPMENT_TYPE_CHOICES,
+        'current_area': int(area_id) if area_id.isdigit() else '',
+        'current_status': status,
+        'current_type': eq_type,
+    }
+    return render(request, 'inventory/equipment_list.html', context)
 
 @login_required
 def maintenance_create_view(request):
@@ -108,11 +132,9 @@ def maintenance_create_view(request):
             maintenance = form.save(commit=False)
             maintenance.performed_by = request.user
             maintenance.save()
-            return redirect('inventory:equipment_list') # Redirect to list or detail
+            return redirect('inventory:maintenance_list')
     else:
         form = MaintenanceForm()
-        if request.user.is_authenticated:
-            form.fields['performed_by'].initial = request.user
             
     return render(request, 'inventory/maintenance_form.html', {'form': form})
 
@@ -122,7 +144,7 @@ def equipment_create_view(request):
         form = EquipmentForm(request.POST) 
         if form.is_valid():
             form.save()
-            return redirect('equipment_list')
+            return redirect('inventory:equipment_list')
     else:
         form = EquipmentForm()
     
@@ -135,7 +157,7 @@ def equipment_edit_view(request, pk):
         form = EquipmentForm(request.POST, instance=equipment)
         if form.is_valid():
             form.save()
-            return redirect('equipment_detail', pk=pk)
+            return redirect('inventory:equipment_detail', pk=pk)
     else:
         form = EquipmentForm(instance=equipment)
     
@@ -150,7 +172,7 @@ def area_create_view(request):
             next_url = request.GET.get('next')
             if next_url:
                 return redirect(next_url)
-            return redirect('dashboard')
+            return redirect('inventory:dashboard')
     else:
         form = AreaForm()
     
@@ -168,7 +190,7 @@ def area_edit_view(request, pk):
         form = AreaForm(request.POST, instance=area)
         if form.is_valid():
             form.save()
-            return redirect('area_list')
+            return redirect('inventory:area_list')
     else:
         form = AreaForm(instance=area)
     
@@ -183,7 +205,7 @@ def cost_center_create_view(request):
             next_url = request.GET.get('next')
             if next_url:
                 return redirect(next_url)
-            return redirect('dashboard')
+            return redirect('inventory:dashboard')
     else:
         form = CostCenterForm()
     
@@ -201,7 +223,7 @@ def cost_center_edit_view(request, pk):
         form = CostCenterForm(request.POST, instance=cost_center)
         if form.is_valid():
             form.save()
-            return redirect('cost_center_list')
+            return redirect('inventory:cost_center_list')
     else:
         form = CostCenterForm(instance=cost_center)
     
@@ -220,7 +242,7 @@ def user_create_view(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('user_list')
+            return redirect('inventory:user_list')
     else:
         form = CustomUserCreationForm()
     
@@ -275,7 +297,7 @@ def peripheral_create_view(request):
         form = PeripheralForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('peripheral_list')
+            return redirect('inventory:peripheral_list')
     else:
         form = PeripheralForm()
     
@@ -288,11 +310,10 @@ def peripheral_edit_view(request, pk):
         form = PeripheralForm(request.POST, instance=peripheral)
         if form.is_valid():
             form.save()
-            return redirect('peripheral_detail', pk=pk)
+            return redirect('inventory:peripheral_detail', pk=pk)
     else:
         form = PeripheralForm(instance=peripheral)
     
-    return render(request, 'inventory/peripheral_form.html', {'form': form, 'title': f'Editar {peripheral.brand} {peripheral.model}'})
     return render(request, 'inventory/peripheral_form.html', {'form': form, 'title': f'Editar {peripheral.brand} {peripheral.model}'})
 
 @login_required
@@ -304,7 +325,7 @@ def client_create_view(request):
             next_url = request.GET.get('next')
             if next_url:
                 return redirect(next_url)
-            return redirect('dashboard')
+            return redirect('inventory:dashboard')
     else:
         form = ClientForm()
     
@@ -342,8 +363,60 @@ def handover_create_view(request):
                 handover.technician = request.user
                 handover.save()
                 form.save_m2m() 
-                return redirect('handover_acta', pk=handover.pk)
+                return redirect('inventory:handover_acta', pk=handover.pk)
     else:
         form = HandoverForm()
     
     return render(request, 'inventory/handover_form.html', {'form': form, 'title': 'Nueva Entrega / Acta'})
+
+@login_required
+def maintenance_list_view(request):
+    date_start = request.GET.get('date_start', '')
+    date_end = request.GET.get('date_end', '')
+    m_type = request.GET.get('type', '')
+
+    maintenances = Maintenance.objects.all().order_by('-date')
+    
+    if date_start:
+        maintenances = maintenances.filter(date__gte=date_start)
+    if date_end:
+        maintenances = maintenances.filter(date__lte=date_end)
+    if m_type:
+        maintenances = maintenances.filter(maintenance_type=m_type)
+
+    from .choices import MAINTENANCE_TYPE_CHOICES
+    
+    context = {
+        'maintenances': maintenances,
+        'maintenance_types': MAINTENANCE_TYPE_CHOICES,
+        'current_start': date_start,
+        'current_end': date_end,
+        'current_type': m_type,
+    }
+    return render(request, 'inventory/maintenance_list.html', context)
+
+@login_required
+def handover_list_view(request):
+    date_start = request.GET.get('date_start', '')
+    date_end = request.GET.get('date_end', '')
+    area_id = request.GET.get('area', '')
+
+    handovers = Handover.objects.all().order_by('-date')
+    
+    if date_start:
+        handovers = handovers.filter(date__date__gte=date_start)
+    if date_end:
+        handovers = handovers.filter(date__date__lte=date_end)
+    if area_id:
+        handovers = handovers.filter(Q(source_area_id=area_id) | Q(destination_area_id=area_id))
+
+    areas = Area.objects.all()
+    
+    context = {
+        'handovers': handovers,
+        'areas': areas,
+        'current_start': date_start,
+        'current_end': date_end,
+        'current_area': int(area_id) if area_id.isdigit() else '',
+    }
+    return render(request, 'inventory/handover_list.html', context)

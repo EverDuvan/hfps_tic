@@ -23,7 +23,7 @@
 
     <!-- Edit Button -->
     <div style="margin-bottom: 2rem;">
-        <a href="{% url 'peripheral_edit' peripheral.pk %}" class="btn btn-primary">✏️ Editar Periférico</a>
+        <a href="{% url 'inventory:peripheral_edit' peripheral.pk %}" class="btn btn-primary">✏️ Editar Periférico</a>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
@@ -41,7 +41,7 @@
             </h3>
             <p style="font-size: 1.125rem; margin: 0;">
                 {% if peripheral.connected_to %}
-                <a href="{% url 'equipment_detail' peripheral.connected_to.pk %}"
+                <a href="{% url 'inventory:equipment_detail' peripheral.connected_to.pk %}"
                     style="text-decoration: underline; color: #2563eb;">
                     {{ peripheral.connected_to.serial_number }}
                 </a>
@@ -79,7 +79,8 @@
                 <td style="padding: 0.5rem;">{{ h.get_type_display }}</td>
                 <td style="padding: 0.5rem;">{{ h.assigned_to }}</td>
                 <td style="padding: 0.5rem;">
-                    <a href="{% url 'handover_acta' h.pk %}" target="_blank" style="color: #2563eb;">Ver PDF</a>
+                    <a href="{% url 'inventory:handover_acta' h.pk %}" target="_blank" style="color: #2563eb;">Ver
+                        PDF</a>
                 </td>
             </tr>
             {% endfor %}
@@ -91,6 +92,6 @@
 </div>
 
 <div style="margin-top: 2rem;">
-    <a href="{% url 'peripheral_list' %}" class="btn">Volver a la lista</a>
+    <a href="{% url 'inventory:peripheral_list' %}" class="btn">Volver a la lista</a>
 </div>
 {% endblock %}

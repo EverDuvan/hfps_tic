@@ -1,0 +1,82 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Entregas{% endblock %}
+{% block page_title %}Historial de Entregas{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div class="search-bar" style="flex-grow: 1; margin-right: 1rem;">
+            <form method="get" action="" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                <label style="font-size: 0.8rem; font-weight: 500;">Desde:</label>
+                <input type="date" name="date_start" value="{{ current_start }}"
+                    style="padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px;">
+
+                <label style="font-size: 0.8rem; font-weight: 500;">Hasta:</label>
+                <input type="date" name="date_end" value="{{ current_end }}"
+                    style="padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px;">
+
+                <select name="area" style="padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px;">
+                    <option value="">-- Área --</option>
+                    {% for area in areas %}
+                    <option value="{{ area.id }}" {% if current_area == area.id %}selected{% endif %}>{{ area.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="btn btn-primary"
+                    style="margin-top: 0; padding: 0.4rem 0.8rem;">Filtrar</button>
+                <a href="{% url 'inventory:handover_list' %}" class="btn"
+                    style="background-color: #6b7280; color: white; padding: 0.4rem 0.8rem; text-decoration: none;">Limpiar</a>
+            </form>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{% url 'inventory:export_data' 'handover' %}" class="btn"
+                style="background-color: #10b981; color: white;">Exportar Excel</a>
+            <a href="{% url 'inventory:handover_create' %}" class="btn btn-primary">
+                ➕ Nueva Entrega
+            </a>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Equipos</th>
+                    <th>Técnico</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for handover in handovers %}
+                <tr>
+                    <td style="font-weight: bold; color: #6b7280;">#{{ handover.id }}</td>
+                    <td style="font-weight: 500; color: #111827;">{{ handover.date|date:"d/m/Y" }}</td>
+                    <td>{{ handover.client.name }}</td>
+                    <td>{{ handover.get_type_display }}</td>
+                    <td>{{ handover.equipment.count }}</td>
+                    <td>{{ handover.technician.get_full_name|default:handover.technician.username }}</td>
+                    <td>
+                        <a href="{% url 'inventory:handover_acta' handover.pk %}" class="btn" target="_blank"
+                            style="padding: 0.25rem 0.6rem; font-size: 0.8rem; background-color: #6b7280; color: white;">
+                            📄 Ver Acta
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 1rem; color: #6b7280;">
+                        No se encontraron entregas registradas.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -6,12 +6,42 @@
 {% block content %}
 <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <form method="get" action="" style="display: flex; gap: 1rem; flex-grow: 1;">
-            <input type="text" name="q" placeholder="Buscar por Serial, Marca, Modelo, IP..."
-                value="{{ search_query }}">
-            <button type="submit" class="btn btn-primary" style="margin-top: 0;">Buscar</button>
+        <form method="get" action=""
+            style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; flex-grow: 1;">
+            <input type="text" name="q" placeholder="Buscar..." value="{{ search_query }}"
+                style="padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px;">
+
+            <select name="area" style="padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Todas las Áreas --</option>
+                {% for area in areas %}
+                <option value="{{ area.id }}" {% if current_area == area.id %}selected{% endif %}>{{ area.name }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="status" style="padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Estado --</option>
+                {% for code, label in status_choices %}
+                <option value="{{ code }}" {% if current_status == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="type" style="padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Tipo --</option>
+                {% for code, label in type_choices %}
+                <option value="{{ code }}" {% if current_type == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" class="btn btn-primary"
+                style="margin-top: 0; padding: 0.4rem 0.8rem;">Filtrar</button>
+            <a href="{% url 'inventory:equipment_list' %}" class="btn"
+                style="background-color: #6b7280; color: white; padding: 0.4rem 0.8rem; text-decoration: none;">Limpiar</a>
         </form>
-        <a href="{% url 'equipment_create' %}" class="btn btn-primary">Agregar Equipo</a>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{% url 'inventory:export_data' 'equipment' %}" class="btn"
+                style="background-color: #10b981; color: white;">Exportar Excel</a>
+            <a href="{% url 'inventory:equipment_create' %}" class="btn btn-primary">Agregar Equipo</a>
+        </div>
     </div>
 </div>
 
@@ -55,7 +85,7 @@
                 </td>
                 <td>
                     <!-- Future: Edit link -->
-                    <a href="{% url 'equipment_detail' e.pk %}" class="btn"
+                    <a href="{% url 'inventory:equipment_detail' e.pk %}" class="btn"
                         style="font-size: 0.8rem; padding: 0.25rem 0.5rem; text-decoration: none;">Ver</a>
                 </td>
             </tr>

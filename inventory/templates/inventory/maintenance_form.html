@@ -13,7 +13,8 @@
         <ul>
             {% for field in form %}
             {% if field.errors %}
-            <li><strong>{{ field.label }}:</strong> {{ field.errors|striptags }}</li>
+            <li><strong style="color: red;">{{ field.label }}:</strong> <span style="color: red;">{{
+                    field.errors|striptags }}</span></li>
             {% endif %}
             {% endfor %}
         </ul>

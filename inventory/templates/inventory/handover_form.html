@@ -26,7 +26,7 @@
                 <label for="{{ form.client.id_for_label }}"
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 500;">
                     {{ form.client.label }}
-                    <a href="{% url 'client_create' %}?next={% url 'handover_create' %}"
+                    <a href="{% url 'inventory:client_create' %}?next={% url 'inventory:handover_create' %}"
                         style="font-size: 0.8rem; color: #3b82f6; text-decoration: none;">➕ Nuevo Cliente</a>
                 </label>
                 {{ form.client }}
@@ -39,7 +39,7 @@
                 <label for="{{ form.source_area.id_for_label }}"
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 500;">
                     {{ form.source_area.label }}
-                    <a href="{% url 'area_create' %}?next={% url 'handover_create' %}"
+                    <a href="{% url 'inventory:area_create' %}?next={% url 'inventory:handover_create' %}"
                         style="font-size: 0.8rem; color: #3b82f6; text-decoration: none;">➕ Nueva Área</a>
                 </label>
                 {{ form.source_area }}
@@ -52,7 +52,7 @@
                 <label for="{{ form.destination_area.id_for_label }}"
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 500;">
                     {{ form.destination_area.label }}
-                    <a href="{% url 'area_create' %}?next={% url 'handover_create' %}"
+                    <a href="{% url 'inventory:area_create' %}?next={% url 'inventory:handover_create' %}"
                         style="font-size: 0.8rem; color: #3b82f6; text-decoration: none;">➕ Nueva Área</a>
                 </label>
                 {{ form.destination_area }}
@@ -121,7 +121,7 @@
         </div>
 
         <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <a href="{% url 'dashboard' %}" class="btn" style="background-color: #6b7280;">Cancelar</a>
+            <a href="{% url 'inventory:dashboard' %}" class="btn" style="background-color: #6b7280;">Cancelar</a>
             <button type="submit" name="action" value="preview" class="btn" style="background-color: #3b82f6;"
                 formtarget="_blank">👁️ Previsualizar PDF</button>
             <button type="submit" name="action" value="save" class="btn btn-primary">Generar Acta de Entrega</button>

@@ -53,7 +53,7 @@
             <label for="{{ form.area.id_for_label }}"
                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 500;">
                 {{ form.area.label }}
-                <a href="{% url 'area_create' %}?next={% url 'client_create' %}"
+                <a href="{% url 'inventory:area_create' %}?next={% url 'inventory:client_create' %}"
                     style="font-size: 0.8rem; color: #3b82f6; text-decoration: none;">➕ Nueva Área</a>
             </label>
             {{ form.area }}

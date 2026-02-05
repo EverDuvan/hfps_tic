@@ -46,7 +46,7 @@ class MaintenanceForm(forms.ModelForm):
     class Meta:
         model = Maintenance
         fields = '__all__'
-        exclude = ['date', 'acta_pdfPerformed_by'] # performed_by is usually auto-set to logged user, but for the form we might let them choose or default.
+        exclude = ['date', 'acta_pdf', 'performed_by'] # performed_by is usually auto-set to logged user, but for the form we might let them choose or default.
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
             'start_time': forms.TimeInput(attrs={'type': 'time'}),
@@ -74,7 +74,9 @@ class EquipmentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields:
-            if isinstance(self.fields[field].widget, (forms.TextInput, forms.Textarea, forms.Select, forms.TimeInput, forms.DateInput, forms.NumberInput, forms.EmailInput)):
+            if isinstance(self.fields[field].widget, forms.Select):
+                self.fields[field].widget.attrs.update({'class': 'form-select'})
+            elif isinstance(self.fields[field].widget, (forms.TextInput, forms.Textarea, forms.TimeInput, forms.DateInput, forms.NumberInput, forms.EmailInput)):
                 self.fields[field].widget.attrs.update({'class': 'form-control'})
 
 class PeripheralForm(forms.ModelForm):

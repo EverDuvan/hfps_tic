@@ -21,7 +21,7 @@
     </div>
     
     <div style=" margin-bottom: 2rem;">
-            <a href="{% url 'equipment_edit' equipment.pk %}" class="btn btn-primary">✏️ Editar Equipo</a>
+            <a href="{% url 'inventory:equipment_edit' equipment.pk %}" class="btn btn-primary">✏️ Editar Equipo</a>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
@@ -116,7 +116,8 @@
                     <td style="padding: 0.5rem;">{{ m.get_maintenance_type_display }}</td>
                     <td style="padding: 0.5rem;">{{ m.performed_by.username }}</td>
                     <td style="padding: 0.5rem;">
-                        <a href="{% url 'maintenance_acta' m.pk %}" target="_blank" style="color: #2563eb;">Ver PDF</a>
+                        <a href="{% url 'inventory:maintenance_acta' m.pk %}" target="_blank"
+                            style="color: #2563eb;">Ver PDF</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -145,7 +146,8 @@
                     <td style="padding: 0.5rem;">{{ h.date }}</td>
                     <td style="padding: 0.5rem;">{{ h.assigned_to }}</td>
                     <td style="padding: 0.5rem;">
-                        <a href="{% url 'handover_acta' h.pk %}" target="_blank" style="color: #2563eb;">Ver PDF</a>
+                        <a href="{% url 'inventory:handover_acta' h.pk %}" target="_blank" style="color: #2563eb;">Ver
+                            PDF</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -158,6 +160,6 @@
 </div>
 
 <div style="margin-top: 2rem;">
-    <a href="{% url 'equipment_list' %}" class="btn">Volver a la lista</a>
+    <a href="{% url 'inventory:equipment_list' %}" class="btn">Volver a la lista</a>
 </div>
 {% endblock %}
