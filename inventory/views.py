@@ -2,13 +2,16 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, FileResponse, Http404
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter
+from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter, MaintenanceSchedule
 from .utils import generate_maintenance_pdf, generate_handover_pdf, export_to_excel
 from django.apps import apps
 from .forms import MaintenanceForm, EquipmentForm, AreaForm, CostCenterForm, CustomUserCreationForm, PeripheralForm, HandoverForm, ClientForm
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 @login_required
 def maintenance_acta_view(request, pk):
@@ -420,3 +423,81 @@ def handover_list_view(request):
         'current_area': int(area_id) if area_id.isdigit() else '',
     }
     return render(request, 'inventory/handover_list.html', context)
+
+@login_required
+def maintenance_schedule_view(request):
+    year = int(request.GET.get('year', 2025))
+    
+    # Grid structure: [Month 1..12][Week 1..4]
+    weeks = [1, 2, 3, 4]
+    months = [
+        (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
+        (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
+        (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
+    ]
+    
+    # Fetch all equipment, ordered by Area then Serial
+    equipments = Equipment.objects.all().select_related('area').order_by('area__name', 'serial_number')
+    
+    # Fetch existing schedules
+    schedules = MaintenanceSchedule.objects.filter(year=year)
+    
+    # Create a lookup map: (equipment_id, month, week) -> status
+    schedule_map = {}
+    for s in schedules:
+        schedule_map[(s.equipment_id, s.month, s.week_number)] = s.status
+        
+    # Prepare data for template
+    # grid_data list of dicts: { equipment: eq, schedule: { (m,w): status } } 
+    # Actually efficiently we can access map in template via custom tag or just organizing data better
+    # Let's pass the map as a JSON object or restructure it.
+    # Restructuring for easier template iteration:
+    # equipment.row_data = [ [status_w1, status_w2, status_w3, status_w4] for m in months ]
+    
+    for eq in equipments:
+        eq.schedule_row = []
+        for m_num, m_name in months:
+            month_weeks = []
+            for w in weeks:
+                status = schedule_map.get((eq.id, m_num, w), None)
+                month_weeks.append({'month': m_num, 'week': w, 'status': status})
+            eq.schedule_row.append({'month': m_name, 'weeks': month_weeks})
+            
+    context = {
+        'year': year,
+        'months': months,
+        'equipments': equipments,
+        'weeks': weeks
+    }
+    return render(request, 'inventory/maintenance_schedule.html', context)
+
+@csrf_exempt
+@login_required
+def toggle_schedule_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            equipment_id = data.get('equipment_id')
+            year = data.get('year', 2025)
+            month = data.get('month')
+            week = data.get('week')
+            
+            # Check if exists
+            schedule = MaintenanceSchedule.objects.filter(
+                equipment_id=equipment_id, year=year, month=month, week_number=week
+            ).first()
+            
+            if schedule:
+                # If exists, delete it (Toggle OFF)
+                schedule.delete()
+                return JsonResponse({'status': 'removed'})
+            else:
+                # If not exists, create it (Toggle ON)
+                MaintenanceSchedule.objects.create(
+                    equipment_id=equipment_id, year=year, month=month, week_number=week, status='PENDING'
+                )
+                return JsonResponse({'status': 'added', 'state': 'PENDING'})
+                
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid method'}, status=405)

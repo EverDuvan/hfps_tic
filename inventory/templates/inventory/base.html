@@ -31,6 +31,10 @@
                 class="{% if request.resolver_match.url_name == 'handover_list' or request.resolver_match.url_name == 'handover_create' %}active{% endif %}">
                 📝 Entregas
             </a>
+            <a href="{% url 'inventory:maintenance_schedule' %}"
+                class="{% if request.resolver_match.url_name == 'maintenance_schedule' %}active{% endif %}">
+                📅 Cronograma
+            </a>
             <a href="{% url 'inventory:peripheral_list' %}"
                 class="{% if request.resolver_match.url_name == 'peripheral_list' or request.resolver_match.url_name == 'peripheral_detail' %}active{% endif %}">
                 🖱️ Periféricos
