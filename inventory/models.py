@@ -210,17 +210,16 @@ class MaintenanceSchedule(models.Model):
     ]
 
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='schedules')
-    year = models.IntegerField(default=2025)
-    month = models.IntegerField() # 1-12
-    week_number = models.IntegerField() # 1-4 (Visual week in the month)
+    scheduled_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('equipment', 'year', 'month', 'week_number')
+        unique_together = ('equipment', 'scheduled_date')
         verbose_name = "Cronograma de Mantenimiento"
         verbose_name_plural = "Cronogramas de Mantenimiento"
 
     def __str__(self):
-        return f"{self.equipment} - {self.year}/{self.month}/W{self.week_number}"
+        return f"{self.equipment} - {self.scheduled_date}"
+
+

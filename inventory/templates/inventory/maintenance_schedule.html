@@ -127,9 +127,10 @@
 
                 {% for month_data in eq.schedule_row %}
                 {% for w_data in month_data.weeks %}
-                <td class="cell-slot {% if w_data.status %}active{% endif %}" data-eq="{{ eq.id }}"
-                    data-month="{{ w_data.month }}" data-week="{{ w_data.week }}" onclick="toggleSchedule(this)">
-                    {% if w_data.status %}X{% endif %}
+                <td class="cell-slot {% if w_data.data.status %}active{% endif %}" data-eq="{{ eq.id }}"
+                    data-month="{{ w_data.month }}" data-week="{{ w_data.week }}"
+                    data-date="{{ w_data.data.date|default:'' }}" onclick="toggleSchedule(this)">
+                    {% if w_data.data %}{{ w_data.data.day }}{% endif %}
                 </td>
                 {% endfor %}
                 {% endfor %}
@@ -139,22 +140,73 @@
     </table>
 </div>
 
-<script>
-    function toggleSchedule(cell) {
-        const eqId = cell.getAttribute('data-eq');
-        const month = cell.getAttribute('data-month');
-        const week = cell.getAttribute('data-week');
-        const year = "{{ year }}";
 
-        // Optimistic update
-        const wasActive = cell.classList.contains('active');
-        if (wasActive) {
-            cell.classList.remove('active');
-            cell.innerText = "";
+<!-- Date Selection Modal -->
+<div id="dateModal"
+    style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center;">
+    <div style="background:white; padding:2rem; border-radius:8px; width:300px;">
+        <h3>Programar Mantenimiento</h3>
+        <p>Seleccione la fecha exacta:</p>
+        <input type="date" id="modalDateInput"
+            style="width:100%; padding:0.5rem; margin-bottom:1rem; border:1px solid #ccc; border-radius:4px;">
+        <input type="hidden" id="modalEqId">
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+            <button onclick="closeModal()"
+                style="padding:0.5rem 1rem; border:none; background:#e5e7eb; border-radius:4px; cursor:pointer;">Cancelar</button>
+            <button onclick="saveSchedule()"
+                style="padding:0.5rem 1rem; border:none; background:#3b82f6; color:white; border-radius:4px; cursor:pointer;">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentCell = null;
+
+    function toggleSchedule(cell) {
+        currentCell = cell;
+        const eqId = cell.getAttribute('data-eq');
+        const existingDate = cell.getAttribute('data-date'); // If exists
+
+        document.getElementById('modalEqId').value = eqId;
+        const dateInput = document.getElementById('modalDateInput');
+
+        if (existingDate) {
+            // If exists, confirm delete? Or change?
+            // Simple logic: If confirmed, delete.
+            if (confirm("Ya existe un mantenimiento para el " + existingDate + ". ¿Desea eliminarlo?")) {
+                saveSchedule(true); // Delete mode
+            }
         } else {
-            cell.classList.add('active');
-            cell.innerText = "X";
+            // New schedule
+            // Pre-fill with year-month ??
+            // Let user pick.
+            const year = "{{ year }}";
+            const month = cell.getAttribute('data-month');
+            // Estimate day: Month is 1-indexed. Format YYYY-MM-01
+            dateInput.value = `${year}-${month.toString().padStart(2, '0')}-01`;
+
+            document.getElementById('dateModal').style.display = 'flex';
         }
+    }
+
+    function closeModal() {
+        document.getElementById('dateModal').style.display = 'none';
+        currentCell = null;
+    }
+
+    function saveSchedule(deleteMode = false) {
+        const eqId = document.getElementById('modalEqId').value;
+        const dateInput = document.getElementById('modalDateInput');
+        const selectedDate = dateInput.value;
+
+        if (!deleteMode && !selectedDate) {
+            alert("Seleccione una fecha");
+            return;
+        }
+
+        // Logic
+        // If deleteMode, we need the date from the cell attribute
+        const finalDate = deleteMode ? currentCell.getAttribute('data-date') : selectedDate;
 
         fetch("{% url 'inventory:toggle_schedule' %}", {
             method: "POST",
@@ -163,36 +215,29 @@
             },
             body: JSON.stringify({
                 equipment_id: eqId,
-                year: year,
-                month: month,
-                week: week
+                date: finalDate
             })
         })
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
+                if (data.status === 'added') {
+                    currentCell.classList.add('active');
+                    // Extract day part
+                    const parts = finalDate.split('-');
+                    currentCell.innerText = parts[2]; // Day
+                    currentCell.setAttribute('data-date', finalDate);
+                    closeModal();
+                } else if (data.status === 'removed') {
+                    currentCell.classList.remove('active');
+                    currentCell.innerText = "";
+                    currentCell.removeAttribute('data-date');
+                } else if (data.error) {
                     alert("Error: " + data.error);
-                    // Revert
-                    if (wasActive) {
-                        cell.classList.add('active');
-                        cell.innerText = "X";
-                    } else {
-                        cell.classList.remove('active');
-                        cell.innerText = "";
-                    }
                 }
             })
             .catch(err => {
                 console.error(err);
                 alert("Error de conexión");
-                // Revert
-                if (wasActive) {
-                    cell.classList.add('active');
-                    cell.innerText = "X";
-                } else {
-                    cell.classList.remove('active');
-                    cell.innerText = "";
-                }
             });
     }
 </script>

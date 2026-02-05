@@ -1,0 +1,93 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Reportes y Estadísticas{% endblock %}
+{% block page_title %}Dashboard de Métricas{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3 style="margin-top: 0;">Resumen General</h3>
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        <div style="padding: 1rem; background: #f3f4f6; border-radius: 8px; text-align: center;">
+            <div style="font-size: 2rem; font-weight: bold; color: #3b82f6;">{{ total_equipment }}</div>
+            <div style="color: #6b7280;">Equipos Activos</div>
+        </div>
+        <div style="padding: 1rem; background: #f3f4f6; border-radius: 8px; text-align: center;">
+            <div style="font-size: 2rem; font-weight: bold; color: #10b981;">{{ completed_maintenance }}</div>
+            <div style="color: #6b7280;">Mantenimientos ({{ current_year }})</div>
+        </div>
+        <div style="padding: 1rem; background: #f3f4f6; border-radius: 8px; text-align: center;">
+            <div style="font-size: 2rem; font-weight: bold; color: #f59e0b;">{{ pending_schedule }}</div>
+            <div style="color: #6b7280;">Pendientes (Semana Actual)</div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+    <!-- Chart 1: Equipment by Area -->
+    <div class="card">
+        <h3>Equipos por Área</h3>
+        <canvas id="areaChart"></canvas>
+    </div>
+
+    <!-- Chart 2: Maintenance Status -->
+    <div class="card">
+        <h3>Estado Mantenimientos {{ current_year }}</h3>
+        <canvas id="statusChart"></canvas>
+    </div>
+</div>
+
+<script>
+    // Data from Django
+    const areaLabels = {{ area_labels| safe }};
+    const areaData = {{ area_data| safe }};
+
+    // Area Chart
+    const ctxArea = document.getElementById('areaChart').getContext('2d');
+    new Chart(ctxArea, {
+        type: 'bar',
+        data: {
+            labels: areaLabels,
+            datasets: [{
+                label: 'Cantidad de Equipos',
+                data: areaData,
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // Maintenance Chart
+    const ctxStatus = document.getElementById('statusChart').getContext('2d');
+    const maintenanceStats = [{{ completed_maintenance }}, { { pending_schedule } }];
+    // Visualization of vs Pending (Scheduled)
+
+    new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: ['Realizados', 'Pendientes (Semana)'],
+            datasets: [{
+                data: maintenanceStats,
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.6)', // Green
+                    'rgba(245, 158, 11, 0.6)'  // Yellow
+                ],
+                borderColor: [
+                    'rgba(16, 185, 129, 1)',
+                    'rgba(245, 158, 11, 1)'
+                ],
+                borderWidth: 1
+            }]
+        }
+    });
+</script>
+{% endblock %}

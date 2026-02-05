@@ -451,16 +451,49 @@ def maintenance_schedule_view(request):
     # grid_data list of dicts: { equipment: eq, schedule: { (m,w): status } } 
     # Actually efficiently we can access map in template via custom tag or just organizing data better
     # Let's pass the map as a JSON object or restructure it.
-    # Restructuring for easier template iteration:
-    # equipment.row_data = [ [status_w1, status_w2, status_w3, status_w4] for m in months ]
+@login_required
+def maintenance_schedule_view(request):
+    year = int(request.GET.get('year', timezone.now().year))
+    
+    # Grid structure: [Month 1..12][Week 1..4]
+    weeks = [1, 2, 3, 4]
+    months = [
+        (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
+        (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
+        (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
+    ]
+    
+    equipments = Equipment.objects.all().select_related('area').order_by('area__name', 'serial_number')
+    
+    # Fetch schedules for the year
+    schedules = MaintenanceSchedule.objects.filter(scheduled_date__year=year)
+    
+    # Map: (equipment_id, month, visual_week) -> { status, day }
+    schedule_map = {}
+    for s in schedules:
+        day = s.scheduled_date.day
+        month = s.scheduled_date.month
+        
+        # Determine visual week
+        if day <= 7: v_week = 1
+        elif day <= 14: v_week = 2
+        elif day <= 21: v_week = 3
+        else: v_week = 4
+        
+        # Store data. If multiple in same visual week (rare but possible), just overwrite or show one.
+        schedule_map[(s.equipment_id, month, v_week)] = {
+            'status': s.status,
+            'day': day,
+            'date': s.scheduled_date.strftime('%Y-%m-%d')
+        }
     
     for eq in equipments:
         eq.schedule_row = []
         for m_num, m_name in months:
             month_weeks = []
             for w in weeks:
-                status = schedule_map.get((eq.id, m_num, w), None)
-                month_weeks.append({'month': m_num, 'week': w, 'status': status})
+                data = schedule_map.get((eq.id, m_num, w), None)
+                month_weeks.append({'month': m_num, 'week': w, 'data': data})
             eq.schedule_row.append({'month': m_name, 'weeks': month_weeks})
             
     context = {
@@ -478,26 +511,56 @@ def toggle_schedule_view(request):
         try:
             data = json.loads(request.body)
             equipment_id = data.get('equipment_id')
-            year = data.get('year', 2025)
-            month = data.get('month')
-            week = data.get('week')
+            date_str = data.get('date') # YYYY-MM-DD
             
+            if not date_str:
+                 return JsonResponse({'error': 'Date required'}, status=400)
+
             # Check if exists
             schedule = MaintenanceSchedule.objects.filter(
-                equipment_id=equipment_id, year=year, month=month, week_number=week
+                equipment_id=equipment_id, scheduled_date=date_str
             ).first()
             
             if schedule:
-                # If exists, delete it (Toggle OFF)
+                # Toggle OFF (Delete)
                 schedule.delete()
                 return JsonResponse({'status': 'removed'})
             else:
-                # If not exists, create it (Toggle ON)
+                # Toggle ON (Create)
                 MaintenanceSchedule.objects.create(
-                    equipment_id=equipment_id, year=year, month=month, week_number=week, status='PENDING'
+                    equipment_id=equipment_id, scheduled_date=date_str, status='PENDING'
                 )
                 return JsonResponse({'status': 'added', 'state': 'PENDING'})
                 
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Invalid method'}, status=405)
+
+@login_required
+def reports_dashboard_view(request):
+    current_year = timezone.now().year
+    
+    # 1. Total Equipment
+    total_equipment = Equipment.objects.count()
+    
+    # 2. Equipment by Area
+    areas_q = Area.objects.annotate(eq_count=Count('equipments')).filter(eq_count__gt=0)
+    area_labels = [a.name for a in areas_q]
+    area_data = [a.eq_count for a in areas_q]
+    
+    # 3. Maintenances this year (Completed)
+    completed_maintenance = Maintenance.objects.filter(date__year=current_year).count()
+    
+    # 4. Pending Schedule (This week simplistically or total pending this year)
+    # Let's show total pending for the year to have broader context
+    pending_schedule = MaintenanceSchedule.objects.filter(scheduled_date__year=current_year, status='PENDING').count()
+    
+    context = {
+        'total_equipment': total_equipment,
+        'area_labels': area_labels,
+        'area_data': area_data,
+        'current_year': current_year,
+        'completed_maintenance': completed_maintenance,
+        'pending_schedule': pending_schedule,
+    }
+    return render(request, 'inventory/reports_dashboard.html', context)

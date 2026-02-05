@@ -35,6 +35,10 @@
                 class="{% if request.resolver_match.url_name == 'maintenance_schedule' %}active{% endif %}">
                 📅 Cronograma
             </a>
+            <a href="{% url 'inventory:reports_dashboard' %}"
+                class="{% if request.resolver_match.url_name == 'reports_dashboard' %}active{% endif %}">
+                📊 Reportes
+            </a>
             <a href="{% url 'inventory:peripheral_list' %}"
                 class="{% if request.resolver_match.url_name == 'peripheral_list' or request.resolver_match.url_name == 'peripheral_detail' %}active{% endif %}">
                 🖱️ Periféricos

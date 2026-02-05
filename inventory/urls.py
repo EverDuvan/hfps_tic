@@ -31,6 +31,7 @@ urlpatterns = [
     path('maintenance/', views.maintenance_list_view, name='maintenance_list'),
     path('maintenance/schedule/', views.maintenance_schedule_view, name='maintenance_schedule'),
     path('maintenance/schedule/toggle/', views.toggle_schedule_view, name='toggle_schedule'),
+    path('reports/', views.reports_dashboard_view, name='reports_dashboard'),
     path('inventory/peripherals/', views.peripheral_list_view, name='peripheral_list'),
     path('inventory/peripherals/<int:pk>/', views.peripheral_detail_view, name='peripheral_detail'),
     path('inventory/peripherals/<int:pk>/edit/', views.peripheral_edit_view, name='peripheral_edit'),
