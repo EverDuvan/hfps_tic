@@ -983,7 +983,7 @@ def export_report_pdf(request):
     # FPDF 1.7.2 in Python 3 returns a string for dest='S'. 
     # Must encode to latin-1 to get the correct binary bytes for the response.
     # Otherwise Django/Python utf-8 encoding corrupts the PDF structure, resulting in a blank or invalid file.
-    pdf_content = pdf.output(dest='S').encode('latin-1')
+    pdf_content = bytes(pdf.output())
     response.write(pdf_content)
     
     return response
