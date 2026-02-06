@@ -24,6 +24,9 @@
         </div>
         <div>
             <button type="submit" class="btn btn-primary">🔍 Filtrar Datos</button>
+            <a href="{% url 'inventory:export_report_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+                class="btn" target="_blank" style="background-color: #ef4444; color: white; margin-left: 0.5rem;">📄
+                Exportar PDF</a>
             <a href="{% url 'inventory:reports_dashboard' %}" class="btn"
                 style="background-color: #9ca3af; margin-left: 0.5rem;">Limpiar</a>
         </div>

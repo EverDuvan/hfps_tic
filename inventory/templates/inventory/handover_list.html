@@ -31,8 +31,8 @@
             </form>
         </div>
         <div style="display: flex; gap: 0.5rem;">
-            <a href="{% url 'inventory:export_data' 'handover' %}" class="btn"
-                style="background-color: #10b981; color: white;">Exportar Excel</a>
+            <a href="{% url 'inventory:export_data' 'handover' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+                class="btn" style="background-color: #10b981; color: white;">Exportar Excel</a>
             <a href="{% url 'inventory:handover_create' %}" class="btn btn-primary">
                 ➕ Nueva Entrega
             </a>

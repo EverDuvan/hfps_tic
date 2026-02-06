@@ -32,14 +32,21 @@
                 {% endfor %}
             </select>
 
+            <select name="ownership" style="padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Propiedad --</option>
+                {% for code, label in ownership_choices %}
+                <option value="{{ code }}" {% if current_ownership == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
             <button type="submit" class="btn btn-primary"
                 style="margin-top: 0; padding: 0.4rem 0.8rem;">Filtrar</button>
             <a href="{% url 'inventory:equipment_list' %}" class="btn"
                 style="background-color: #6b7280; color: white; padding: 0.4rem 0.8rem; text-decoration: none;">Limpiar</a>
         </form>
         <div style="display: flex; gap: 0.5rem;">
-            <a href="{% url 'inventory:export_data' 'equipment' %}" class="btn"
-                style="background-color: #10b981; color: white;">Exportar Excel</a>
+            <a href="{% url 'inventory:export_data' 'equipment' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+                class="btn" style="background-color: #10b981; color: white;">Exportar Excel</a>
             <a href="{% url 'inventory:equipment_create' %}" class="btn btn-primary">Agregar Equipo</a>
         </div>
     </div>
@@ -62,7 +69,13 @@
             {% for e in page_obj %}
             <tr>
                 <td>{{ e.serial_number }}</td>
-                <td>{{ e.get_type_display }}</td>
+                <td>
+                    {{ e.get_type_display }}
+                    {% if e.ownership_type == 'RENTED' %}
+                    <span
+                        style="font-size: 0.7rem; background-color: #d97706; color: white; padding: 2px 6px; border-radius: 9999px; margin-left: 0.5rem; vertical-align: middle;">Alquilado</span>
+                    {% endif %}
+                </td>
                 <td>{{ e.brand }} {{ e.model }}</td>
                 <td>{{ e.area.name|default:"-" }}</td>
                 <td>

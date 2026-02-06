@@ -48,3 +48,8 @@ IP_TYPE_CHOICES = [
     ('DHCP', 'DHCP'),
     ('STATIC', 'Estática'),
 ]
+
+OWNERSHIP_CHOICES = [
+    ('OWNED', 'Propio (Institución)'),
+    ('RENTED', 'Alquilado / Leasing'),
+]

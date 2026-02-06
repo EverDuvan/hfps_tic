@@ -50,6 +50,65 @@ def export_data_view(request, model_name):
         raise Http404("Model not found")
     
     queryset = model.objects.all()
+
+    # Apply filters based on model name
+    if model_name == 'equipment':
+        query = request.GET.get('q', '')
+        area_id = request.GET.get('area', '')
+        status = request.GET.get('status', '')
+        eq_type = request.GET.get('type', '')
+        ownership = request.GET.get('ownership', '')
+
+        if query:
+            queryset = queryset.filter(
+                Q(serial_number__icontains=query) | 
+                Q(brand__icontains=query) | 
+                Q(model__icontains=query) |
+                Q(ip_address__icontains=query)
+            )
+        if area_id:
+            queryset = queryset.filter(area_id=area_id)
+        if status:
+            queryset = queryset.filter(status=status)
+        if eq_type:
+            queryset = queryset.filter(type=eq_type)
+        if ownership:
+            queryset = queryset.filter(ownership_type=ownership)
+            
+    elif model_name == 'maintenance':
+        date_start = request.GET.get('date_start', '')
+        date_end = request.GET.get('date_end', '')
+        m_type = request.GET.get('type', '')
+        
+        if date_start:
+            queryset = queryset.filter(date__gte=date_start)
+        if date_end:
+            queryset = queryset.filter(date__lte=date_end)
+        if m_type:
+            queryset = queryset.filter(maintenance_type=m_type)
+            
+    elif model_name == 'handover':
+        date_start = request.GET.get('date_start', '')
+        date_end = request.GET.get('date_end', '')
+        area_id = request.GET.get('area', '')
+        
+        if date_start:
+            queryset = queryset.filter(date__date__gte=date_start)
+        if date_end:
+            queryset = queryset.filter(date__date__lte=date_end)
+        if area_id:
+            queryset = queryset.filter(Q(source_area_id=area_id) | Q(destination_area_id=area_id))
+            
+    elif model_name == 'peripheral':
+        query = request.GET.get('q', '')
+        if query:
+            queryset = queryset.filter(
+                Q(serial_number__icontains=query) | 
+                Q(brand__icontains=query) | 
+                Q(model__icontains=query) |
+                Q(type__icontains=query)
+            )
+
     # Create a dummy ModelAdmin-like object or just pass a simple object with model._meta
     class DummyAdmin:
         pass
@@ -93,7 +152,8 @@ def equipment_list_view(request):
     area_id = request.GET.get('area', '')
     status = request.GET.get('status', '')
     eq_type = request.GET.get('type', '')
-
+    ownership = request.GET.get('ownership', '')
+    
     equipments_list = Equipment.objects.all().order_by('-created_at')
     
     if query:
@@ -110,13 +170,15 @@ def equipment_list_view(request):
         equipments_list = equipments_list.filter(status=status)
     if eq_type:
         equipments_list = equipments_list.filter(type=eq_type)
+    if ownership:
+        equipments_list = equipments_list.filter(ownership_type=ownership)
     
     paginator = Paginator(equipments_list, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     areas = Area.objects.all()
-    from .choices import EQUIPMENT_STATUS_CHOICES, EQUIPMENT_TYPE_CHOICES
+    from .choices import EQUIPMENT_STATUS_CHOICES, EQUIPMENT_TYPE_CHOICES, OWNERSHIP_CHOICES
         
     context = {
         'page_obj': page_obj, 
@@ -124,9 +186,11 @@ def equipment_list_view(request):
         'areas': areas,
         'status_choices': EQUIPMENT_STATUS_CHOICES,
         'type_choices': EQUIPMENT_TYPE_CHOICES,
+        'ownership_choices': OWNERSHIP_CHOICES,
         'current_area': int(area_id) if area_id.isdigit() else '',
         'current_status': status,
         'current_type': eq_type,
+        'current_ownership': ownership,
     }
     return render(request, 'inventory/equipment_list.html', context)
 
@@ -138,6 +202,46 @@ def maintenance_create_view(request):
             maintenance = form.save(commit=False)
             maintenance.performed_by = request.user
             maintenance.save()
+            
+            # --- Sync with Schedule ---
+            try:
+                # Approximate match logic: same equipment, same month/year
+                # Or exact match if we want strictly scheduled dates. 
+                # Let's check for an existing PENDING schedule in the same month
+                start_of_month = maintenance.date.replace(day=1)
+                import calendar
+                last_day = calendar.monthrange(maintenance.date.year, maintenance.date.month)[1]
+                end_of_month = maintenance.date.replace(day=last_day)
+                
+                schedule = MaintenanceSchedule.objects.filter(
+                    equipment=maintenance.equipment,
+                    scheduled_date__range=[start_of_month, end_of_month],
+                    status='PENDING'
+                ).first()
+                
+                if schedule:
+                    # Update existing pending schedule
+                    schedule.status = 'COMPLETED'
+                    schedule.scheduled_date = maintenance.date # Update date to actual maintenance date
+                    schedule.save()
+                else:
+                    # Create new completed schedule entry if none existed
+                    # Check if there is already a completed one for this date to avoid duplicates?
+                    exists = MaintenanceSchedule.objects.filter(
+                        equipment=maintenance.equipment,
+                        scheduled_date=maintenance.date
+                    ).exists()
+                    
+                    if not exists:
+                        MaintenanceSchedule.objects.create(
+                            equipment=maintenance.equipment,
+                            scheduled_date=maintenance.date,
+                            status='COMPLETED'
+                        )
+            except Exception as e:
+                print(f"Error syncing schedule: {e}")
+            # --------------------------
+
             return redirect('inventory:maintenance_list')
     else:
         form = MaintenanceForm()
@@ -625,3 +729,261 @@ def reports_dashboard_view(request):
         'warranty_expiring': warranty_expiring,
     }
     return render(request, 'inventory/reports_dashboard.html', context)
+
+def export_report_pdf(request):
+    import datetime
+    from fpdf import FPDF
+    from django.http import HttpResponse
+    from django.db.models import Count
+    
+    # 1. Date Filtering (Same logic as dashboard)
+    today = timezone.now().date()
+    start_str = request.GET.get('start_date', '')
+    end_str = request.GET.get('end_date', '')
+    
+    if not start_str:
+        start_date = today.replace(month=1, day=1)
+    else:
+        try:
+            start_date = datetime.datetime.strptime(start_str, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = today.replace(month=1, day=1)
+            
+    if not end_str:
+        end_date = today
+    else:
+        try:
+            end_date = datetime.datetime.strptime(end_str, '%Y-%m-%d').date()
+        except ValueError:
+            end_date = today
+
+    # 2. Fetch Data
+    maintenances = Maintenance.objects.filter(date__range=[start_date, end_date])
+    handovers = Handover.objects.filter(date__date__range=[start_date, end_date])
+    equipments = Equipment.objects.all()
+    
+    total_equipment = equipments.count()
+    active_equipment = equipments.filter(status='ACTIVE').count()
+    maintenance_count = maintenances.count()
+    handover_count = handovers.count()
+    
+    # Warranties expiring next 90 days
+    limit_date = today + datetime.timedelta(days=90)
+    warranty_expiring = equipments.filter(warranty_expiry__range=[today, limit_date]).order_by('warranty_expiry')
+
+    # 3. Generate PDF
+    class PDF(FPDF):
+        def header(self):
+            self.set_font('Arial', 'B', 15)
+            self.cell(0, 10, 'Reporte de Gestión de Inventario y Mantenimiento', 0, 1, 'C')
+            self.set_font('Arial', '', 10)
+            self.cell(0, 5, f'Generado el: {datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}', 0, 1, 'C')
+            self.ln(10)
+
+        def footer(self):
+            self.set_y(-15)
+            self.set_font('Arial', 'I', 8)
+            self.cell(0, 10, f'Página {self.page_no()}/{{nb}}', 0, 0, 'C')
+
+    pdf = PDF()
+    pdf.alias_nb_pages()
+    pdf.add_page()
+    
+    # --- Period Info ---
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, f'Periodo del Reporte: {start_date.strftime("%d/%m/%Y")} al {end_date.strftime("%d/%m/%Y")}', 0, 1, 'L')
+    pdf.ln(5)
+    
+    # --- Executive Summary ---
+    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, '1. Resumen Ejecutivo', 0, 1, 'L', fill=True)
+    pdf.ln(2)
+    
+    pdf.set_font('Arial', '', 11)
+    
+    # KPI Grid simulation
+    col_width = 45
+    pdf.cell(col_width, 10, 'Total Equipos:', 0, 0)
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(col_width, 10, str(total_equipment), 0, 0)
+    
+    pdf.set_font('Arial', '', 11)
+    pdf.cell(col_width, 10, 'Mantenimientos:', 0, 0)
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(col_width, 10, str(maintenance_count), 0, 1)
+    
+    pdf.set_font('Arial', '', 11)
+    pdf.cell(col_width, 10, 'Equipos Activos:', 0, 0)
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(col_width, 10, str(active_equipment), 0, 0)
+    
+    pdf.set_font('Arial', '', 11)
+    pdf.cell(col_width, 10, 'Entregas:', 0, 0)
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(col_width, 10, str(handover_count), 0, 1)
+    pdf.ln(5)
+
+    # --- Maintenance Summary ---
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, '2. Resumen de Mantenimientos por Tipo', 0, 1, 'L', fill=True)
+    pdf.ln(2)
+    
+    m_by_type = list(maintenances.values('maintenance_type').annotate(count=Count('id')))
+    
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(80, 8, 'Tipo de Mantenimiento', 1)
+    pdf.cell(40, 8, 'Cantidad', 1)
+    pdf.ln()
+    
+    # Import choices locally
+    from .choices import MAINTENANCE_TYPE_CHOICES
+    
+    pdf.set_font('Arial', '', 10)
+    if m_by_type:
+        for item in m_by_type:
+            label = dict(MAINTENANCE_TYPE_CHOICES).get(item['maintenance_type'], item['maintenance_type'])
+            pdf.cell(80, 8, str(label), 1)
+            pdf.cell(40, 8, str(item['count']), 1)
+            pdf.ln()
+    else:
+        pdf.cell(120, 8, 'No se registraron mantenimientos en este periodo.', 1)
+        pdf.ln()
+    pdf.ln(5)
+    
+    # --- Top Technicians ---
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, '3. Actividad por Técnico (Top 5)', 0, 1, 'L', fill=True)
+    pdf.ln(2)
+    
+    top_techs = list(maintenances.values('performed_by__username').annotate(count=Count('id')).order_by('-count')[:5])
+    
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(80, 8, 'Técnico', 1)
+    pdf.cell(40, 8, 'Mantenimientos', 1)
+    pdf.ln()
+    
+    pdf.set_font('Arial', '', 10)
+    if top_techs:
+        for tech in top_techs:
+            username = tech['performed_by__username']
+            # Try to get full name if possible, assuming username is available
+            user_display = username 
+            # (Fetching actual User object for full name would be cleaner but this fits in single view logic)
+            pdf.cell(80, 8, str(user_display).title(), 1)
+            pdf.cell(40, 8, str(tech['count']), 1)
+            pdf.ln()
+    else:
+        pdf.cell(120, 8, 'Sin actividad registrada.', 1)
+        pdf.ln()
+    pdf.ln(5)
+
+    # --- Warranty Alerts ---
+    if warranty_expiring.exists():
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 12)
+        pdf.set_text_color(220, 50, 50)
+        pdf.cell(0, 10, '4. Alertas de Garantía (Próximos 90 días)', 0, 1, 'L', fill=False)
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln(2)
+        
+        pdf.set_font('Arial', 'B', 9)
+        pdf.cell(40, 8, 'Fecha Vence', 1)
+        pdf.cell(50, 8, 'Serial', 1)
+        pdf.cell(60, 8, 'Equipo', 1)
+        pdf.cell(40, 8, 'Área', 1)
+        pdf.ln()
+        
+        pdf.set_font('Arial', '', 9)
+        for w in warranty_expiring:
+            pdf.cell(40, 8, w.warranty_expiry.strftime('%Y-%m-%d'), 1)
+            pdf.cell(50, 8, str(w.serial_number), 1)
+            pdf.cell(60, 8, f"{w.brand} {w.model}"[:30], 1)
+            area_name = w.area.name if w.area else "-"
+            pdf.cell(40, 8, area_name[:20], 1)
+            pdf.ln()
+            
+    # --- Detailed Maintenance Log ---
+    if maintenances.exists():
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, '5. Detalle de Mantenimientos Realizados', 0, 1, 'L', fill=True)
+        pdf.ln(2)
+        
+        # Table Header
+        pdf.set_font('Arial', 'B', 8)
+        pdf.cell(25, 8, 'Fecha', 1)
+        pdf.cell(30, 8, 'Serial', 1)
+        pdf.cell(35, 8, 'Equipo', 1)
+        pdf.cell(30, 8, 'Tipo', 1)
+        pdf.cell(35, 8, 'Técnico', 1)
+        pdf.cell(35, 8, 'Descripción', 1)
+        pdf.ln()
+        
+        pdf.set_font('Arial', '', 8)
+        for m in maintenances.select_related('equipment', 'performed_by'):
+            pdf.cell(25, 8, m.date.strftime('%Y-%m-%d'), 1)
+            pdf.cell(30, 8, m.equipment.serial_number[:15], 1)
+            pdf.cell(35, 8, f"{m.equipment.brand} {m.equipment.model}"[:20], 1)
+            
+            m_type_label = dict(MAINTENANCE_TYPE_CHOICES).get(m.maintenance_type, m.maintenance_type)
+            pdf.cell(30, 8, str(m_type_label)[:15], 1)
+            
+            tech_name = m.performed_by.username if m.performed_by else "N/A"
+            pdf.cell(35, 8, tech_name[:18], 1)
+            
+            # Shorten description
+            desc = m.description.replace('\n', ' ')[:20] + "..." if len(m.description) > 20 else m.description
+            pdf.cell(35, 8, desc, 1)
+            pdf.ln()
+            
+    # --- Detailed Handover Log ---
+    if handovers.exists():
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, '6. Detalle de Entregas (Actas)', 0, 1, 'L', fill=True)
+        pdf.ln(2)
+        
+        pdf.set_font('Arial', 'B', 8)
+        pdf.cell(25, 8, 'Fecha', 1)
+        pdf.cell(60, 8, 'Equipos (Serials)', 1) # Widened col
+        pdf.cell(35, 8, 'Origen', 1)
+        pdf.cell(35, 8, 'Destino', 1)
+        pdf.cell(30, 8, 'Tipo', 1)
+        pdf.ln()
+        
+        pdf.set_font('Arial', '', 7) # Smaller font for list
+        # Use prefetch_related for M2M
+        for h in handovers.select_related('source_area', 'destination_area').prefetch_related('equipment'):
+            h_date = h.date.strftime('%Y-%m-%d') if hasattr(h.date, 'strftime') else str(h.date)[:10]
+            
+            # Get list of equipments
+            eq_list = [f"{e.serial_number} ({e.brand})" for e in h.equipment.all()]
+            eq_str = ", ".join(eq_list)
+            
+            # MultiCell for equipments potentially
+            # Simple approach: truncate if too long or use multicell. Using basic cell for now, truncated.
+            
+            pdf.cell(25, 8, h_date, 1)
+            pdf.cell(60, 8, eq_str[:45], 1)
+            
+            source = h.source_area.name if h.source_area else "N/A"
+            dest = h.destination_area.name if h.destination_area else "N/A"
+            
+            pdf.cell(35, 8, source[:20], 1)
+            pdf.cell(35, 8, dest[:20], 1)
+            pdf.cell(30, 8, h.get_type_display()[:15], 1)
+            pdf.ln()
+
+    # Output
+    response = HttpResponse(content_type='application/pdf')
+    # Change attachment to inline for preview
+    response['Content-Disposition'] = f'inline; filename="reporte_inventario_{start_date}_{end_date}.pdf"'
+    
+    # FPDF 1.7.2 in Python 3 returns a string for dest='S'. 
+    # Must encode to latin-1 to get the correct binary bytes for the response.
+    # Otherwise Django/Python utf-8 encoding corrupts the PDF structure, resulting in a blank or invalid file.
+    pdf_content = pdf.output(dest='S').encode('latin-1')
+    response.write(pdf_content)
+    
+    return response

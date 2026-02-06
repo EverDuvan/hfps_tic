@@ -8,7 +8,7 @@ from .choices import (
     EQUIPMENT_TYPE_CHOICES, EQUIPMENT_STATUS_CHOICES,
     PERIPHERAL_TYPE_CHOICES, PERIPHERAL_STATUS_CHOICES,
     MAINTENANCE_TYPE_CHOICES, HANDOVER_TYPE_CHOICES,
-    IP_TYPE_CHOICES
+    IP_TYPE_CHOICES, OWNERSHIP_CHOICES
 )
 
 class CostCenter(models.Model):
@@ -82,6 +82,12 @@ class Equipment(models.Model):
     # Electrical Specs
     voltage = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Voltaje"))
     amperage = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Amperaje (A)"))
+
+    # Ownership & Rental Info
+    ownership_type = models.CharField(max_length=20, choices=OWNERSHIP_CHOICES, default='OWNED', verbose_name=_("Propiedad"))
+    provider_name = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Proveedor / Empresa"))
+    rental_contract_ref = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Ref. Contrato / Ticket"))
+    support_phone = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Teléfono Soporte"))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

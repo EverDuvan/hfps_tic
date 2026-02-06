@@ -75,7 +75,14 @@
         background-color: #f3f4f6;
     }
 
-    .cell-slot.active {
+    .cell-slot.status-PENDING {
+        background-color: #3b82f6;
+        /* Blue */
+        color: white;
+        font-weight: bold;
+    }
+
+    .cell-slot.status-COMPLETED {
         background-color: #10b981;
         /* Green */
         color: white;
@@ -97,6 +104,21 @@
             {% endfor %}
         </select>
     </form>
+</div>
+
+<div
+    style="display: flex; gap: 1.5rem; margin-bottom: 1rem; align-items: center; padding: 0.5rem 1rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb; width: fit-content;">
+    <span style="font-size: 0.9rem; font-weight: 600; color: #374151; margin-right: 0.5rem;">Convenciones:</span>
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span
+            style="width: 16px; height: 16px; background-color: #3b82f6; border-radius: 4px; display: inline-block;"></span>
+        <span style="font-size: 0.85rem; color: #4b5563;">Programados</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span
+            style="width: 16px; height: 16px; background-color: #10b981; border-radius: 4px; display: inline-block;"></span>
+        <span style="font-size: 0.85rem; color: #4b5563;">Realizados</span>
+    </div>
 </div>
 
 <div class="schedule-container">
@@ -127,8 +149,8 @@
 
                 {% for month_data in eq.schedule_row %}
                 {% for w_data in month_data.weeks %}
-                <td class="cell-slot {% if w_data.data.status %}active{% endif %}" data-eq="{{ eq.id }}"
-                    data-month="{{ w_data.month }}" data-week="{{ w_data.week }}"
+                <td class="cell-slot {% if w_data.data %}status-{{ w_data.data.status }}{% endif %}"
+                    data-eq="{{ eq.id }}" data-month="{{ w_data.month }}" data-week="{{ w_data.week }}"
                     data-date="{{ w_data.data.date|default:'' }}" onclick="toggleSchedule(this)">
                     {% if w_data.data %}{{ w_data.data.day }}{% endif %}
                 </td>
@@ -221,14 +243,15 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'added') {
-                    currentCell.classList.add('active');
+                    currentCell.classList.remove('status-PENDING', 'status-COMPLETED'); // Clear old
+                    currentCell.classList.add('status-' + data.state); // Add new based on response
                     // Extract day part
                     const parts = finalDate.split('-');
                     currentCell.innerText = parts[2]; // Day
                     currentCell.setAttribute('data-date', finalDate);
                     closeModal();
                 } else if (data.status === 'removed') {
-                    currentCell.classList.remove('active');
+                    currentCell.classList.remove('status-PENDING', 'status-COMPLETED');
                     currentCell.innerText = "";
                     currentCell.removeAttribute('data-date');
                 } else if (data.error) {

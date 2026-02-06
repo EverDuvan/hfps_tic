@@ -61,6 +61,34 @@
     <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
         <h3
             style="font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
+            Información de Propiedad</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+            <div>
+                <span style="display: block; font-size: 0.75rem; color: #6b7280;">Tipo de Propiedad</span>
+                <span
+                    style="font-weight: 500; {% if equipment.ownership_type == 'RENTED' %}color: #d97706;{% endif %}">{{
+                    equipment.get_ownership_type_display }}</span>
+            </div>
+            {% if equipment.ownership_type == 'RENTED' %}
+            <div>
+                <span style="display: block; font-size: 0.75rem; color: #6b7280;">Proveedor</span>
+                <span style="font-weight: 500;">{{ equipment.provider_name|default:"-" }}</span>
+            </div>
+            <div>
+                <span style="display: block; font-size: 0.75rem; color: #6b7280;">Ref. Contrato / Ticket</span>
+                <span style="font-weight: 500;">{{ equipment.rental_contract_ref|default:"-" }}</span>
+            </div>
+            <div>
+                <span style="display: block; font-size: 0.75rem; color: #6b7280;">Soporte Proveedor</span>
+                <span style="font-weight: 500;">{{ equipment.support_phone|default:"-" }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+        <h3
+            style="font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
             Especificaciones Técnicas</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
             <div>

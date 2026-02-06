@@ -30,8 +30,8 @@
             </form>
         </div>
         <div style="display: flex; gap: 0.5rem;">
-            <a href="{% url 'inventory:export_data' 'maintenance' %}" class="btn"
-                style="background-color: #10b981; color: white;">Exportar Excel</a>
+            <a href="{% url 'inventory:export_data' 'maintenance' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+                class="btn" style="background-color: #10b981; color: white;">Exportar Excel</a>
             <a href="{% url 'inventory:maintenance_create' %}" class="btn btn-primary">
                 ➕ Registrar Mantenimiento
             </a>
