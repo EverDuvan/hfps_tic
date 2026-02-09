@@ -4,6 +4,17 @@ from django.http import HttpResponse
 from fpdf import FPDF
 import io
 
+def clean_text(text):
+    if text is None:
+        return ""
+    try:
+        # Encode to cp1252 (standard Windows encoding often used in PDFs)
+        # and decode as latin-1 to keep single-byte characters in Python string
+        return str(text).encode('cp1252', 'replace').decode('latin-1')
+    except Exception:
+        return str(text)
+
+
 def export_to_excel(queryset, model_admin, request):
     meta = model_admin.model._meta
     field_names = [field.name for field in meta.fields]
@@ -61,7 +72,7 @@ def draw_header(pdf, title, doc_code, date_obj):
     current_x = pdf.get_x()
     pdf.set_xy(current_x, start_y)
     pdf.set_font("Arial", 'B', 10)
-    pdf.multi_cell(110, 20, title, border=1, align='C') # 20 height to match logo
+    pdf.multi_cell(110, 20, clean_text(title), border=1, align='C') # 20 height to match logo
     
     # Code/Date Block (Right)
     current_x += 110
@@ -69,7 +80,7 @@ def draw_header(pdf, title, doc_code, date_obj):
     pdf.set_font("Arial", size=8)
     
     # Code
-    pdf.cell(50, 5, f"Codigo: {doc_code}", border=1, ln=1)
+    pdf.cell(50, 5, f"Codigo: {clean_text(doc_code)}", border=1, ln=1)
     pdf.set_x(current_x)
     
     # Date parts
@@ -93,14 +104,14 @@ def draw_header(pdf, title, doc_code, date_obj):
 def draw_section_title(pdf, title):
     pdf.set_fill_color(220, 220, 220)
     pdf.set_font("Arial", 'B', 9)
-    pdf.cell(0, 6, title, border=1, ln=1, fill=True)
+    pdf.cell(0, 6, clean_text(title), border=1, ln=1, fill=True)
     pdf.set_font("Arial", size=8)
 
 def draw_field(pdf, label, value, width_label=30, width_value=60, ln=0):
     pdf.set_font("Arial", 'B', 8)
-    pdf.cell(width_label, 5, label, border=1)
+    pdf.cell(width_label, 5, clean_text(label), border=1)
     pdf.set_font("Arial", size=8)
-    pdf.cell(width_value, 5, str(value) if value else "", border=1, ln=ln)
+    pdf.cell(width_value, 5, clean_text(str(value) if value else ""), border=1, ln=ln)
 
 def generate_maintenance_pdf(m):
     pdf = PDF(orientation='P', unit='mm', format='A4')
@@ -112,12 +123,12 @@ def generate_maintenance_pdf(m):
     draw_section_title(pdf, "1. DATOS DEL EQUIPO")
     draw_field(pdf, "Propiedad:", "HFPS", 30, 30)
     draw_field(pdf, "Tipo adquisicion:", "Propio", 30, 30)
-    draw_field(pdf, "Estado:", m.equipment.get_status_display(), 20, 50, ln=1)
+    draw_field(pdf, "Estado:", clean_text(m.equipment.get_status_display()), 20, 50, ln=1)
     
-    draw_field(pdf, "No. Serie (S/N):", m.equipment.serial_number, 30, 60)
-    draw_field(pdf, "Nombre Equipo:", f"{m.equipment.brand} {m.equipment.model}", 30, 70, ln=1)
+    draw_field(pdf, "No. Serie (S/N):", clean_text(m.equipment.serial_number), 30, 60)
+    draw_field(pdf, "Nombre Equipo:", clean_text(f"{m.equipment.brand} {m.equipment.model}"), 30, 70, ln=1)
     
-    draw_field(pdf, "NomUsuarioSO:", m.equipment.os_user or "", 30, 60)
+    draw_field(pdf, "NomUsuarioSO:", clean_text(m.equipment.os_user or ""), 30, 60)
     pdf.cell(100, 5, "", border=1, ln=1) # Spacer
 
     pdf.ln(2)
@@ -127,23 +138,23 @@ def generate_maintenance_pdf(m):
     area = m.equipment.area
     cc = area.cost_center if area and area.cost_center else None
     
-    draw_field(pdf, "Centro De Costos:", f"{cc.code} - {cc.name}" if cc else "N/A", 40, 150, ln=1)
-    draw_field(pdf, "Ubicacion Default:", area.name if area else "N/A", 40, 150, ln=1)
-    draw_field(pdf, "Proceso/Area:", area.description or area.name if area else "", 40, 150, ln=1)
+    draw_field(pdf, "Centro De Costos:", clean_text(f"{cc.code} - {cc.name}" if cc else "N/A"), 40, 150, ln=1)
+    draw_field(pdf, "Ubicacion Default:", clean_text(area.name if area else "N/A"), 40, 150, ln=1)
+    draw_field(pdf, "Proceso/Area:", clean_text(area.description or area.name if area else ""), 40, 150, ln=1)
     
     pdf.ln(2)
     
     # ... 3. CONFIGURACION ...
     draw_section_title(pdf, "3. CONFIGURACION DEL EQUIPO")
-    draw_field(pdf, "Tipo de Equipo:", m.equipment.get_type_display(), 30, 40)
-    draw_field(pdf, "Marca:", m.equipment.brand, 20, 40)
-    draw_field(pdf, "Modelo:", m.equipment.model, 20, 40, ln=1)
+    draw_field(pdf, "Tipo de Equipo:", clean_text(m.equipment.get_type_display()), 30, 40)
+    draw_field(pdf, "Marca:", clean_text(m.equipment.brand), 20, 40)
+    draw_field(pdf, "Modelo:", clean_text(m.equipment.model), 20, 40, ln=1)
     
-    draw_field(pdf, "Voltaje:", m.equipment.voltage, 30, 40)
-    draw_field(pdf, "Amperaje:", m.equipment.amperage, 20, 40)
-    draw_field(pdf, "Sist. Operativo:", m.equipment.operating_system, 20, 40, ln=1)
+    draw_field(pdf, "Voltaje:", clean_text(m.equipment.voltage), 30, 40)
+    draw_field(pdf, "Amperaje:", clean_text(m.equipment.amperage), 20, 40)
+    draw_field(pdf, "Sist. Operativo:", clean_text(m.equipment.operating_system), 20, 40, ln=1)
     
-    draw_field(pdf, "Tamano Pantalla:", m.equipment.screen_size, 40, 150, ln=1)
+    draw_field(pdf, "Tamano Pantalla:", clean_text(m.equipment.screen_size), 40, 150, ln=1)
     
     pdf.ln(2)
 
@@ -175,7 +186,7 @@ def generate_maintenance_pdf(m):
 
     # ... 6. OBSERVATIONS ...
     draw_section_title(pdf, "6. OBSERVACIONES DEL EQUIPO ANTES DEL MANTENIMIENTO")
-    pdf.multi_cell(0, 5, m.description or "N/A", border=1)
+    pdf.multi_cell(0, 5, clean_text(m.description or "N/A"), border=1)
     
     pdf.ln(2)
     
@@ -201,7 +212,7 @@ def generate_maintenance_pdf(m):
     # FOOTER
     draw_section_title(pdf, "ESTADO FINAL Y TIEMPOS")
     pdf.cell(40, 5, "ESTADO FINAL:", border=1)
-    pdf.cell(150, 5, m.equipment.get_status_display(), border=1, ln=1)
+    pdf.cell(150, 5, clean_text(m.equipment.get_status_display()), border=1, ln=1)
     
     start_time = m.start_time.strftime('%H:%M') if m.start_time else "  :  "
     end_time = m.end_time.strftime('%H:%M') if m.end_time else "  :  "
@@ -221,13 +232,11 @@ def generate_maintenance_pdf(m):
     pdf.line(110, y_sig + 15, 190, y_sig + 15)
     pdf.set_xy(110, y_sig + 16)
     tech_name = m.performed_by.get_full_name() if m.performed_by else "TECNICO"
-    pdf.cell(80, 5, tech_name, align='C', ln=1)
+    pdf.cell(80, 5, clean_text(tech_name), align='C', ln=1)
     pdf.set_x(110)
     pdf.cell(80, 5, "SOPORTE TECNICO - TIC", align='C', ln=1)
 
-    output = io.BytesIO()
-    pdf.output(output)
-    return output.getvalue()
+    return pdf.output(dest='S').encode('latin-1')
 
 
 def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
@@ -239,17 +248,17 @@ def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
     # ... 1. DATOS DE LA ENTREGA ...
     draw_section_title(pdf, "1. INFORMACION DE LA ENTREGA")
     
-    draw_field(pdf, "Tipo de Entrega:", handover.get_type_display(), 40, 150, ln=1)
-    draw_field(pdf, "Area Origen:", str(handover.source_area), 40, 55)
-    draw_field(pdf, "Area Destino:", str(handover.destination_area), 40, 55, ln=1)
+    draw_field(pdf, "Tipo de Entrega:", clean_text(handover.get_type_display()), 40, 150, ln=1)
+    draw_field(pdf, "Area Origen:", clean_text(str(handover.source_area)), 40, 55)
+    draw_field(pdf, "Area Destino:", clean_text(str(handover.destination_area)), 40, 55, ln=1)
     
     # Client Info
     if handover.client:
-        draw_field(pdf, "Funcionario/Cliente:", handover.client.name, 40, 150, ln=1)
-        draw_field(pdf, "Identificacion:", handover.client.identification, 40, 55)
-        draw_field(pdf, "Cargo/Correo:", handover.client.email or "", 40, 55, ln=1)
+        draw_field(pdf, "Funcionario/Cliente:", clean_text(handover.client.name), 40, 150, ln=1)
+        draw_field(pdf, "Identificacion:", clean_text(handover.client.identification), 40, 55)
+        draw_field(pdf, "Cargo/Correo:", clean_text(handover.client.email or ""), 40, 55, ln=1)
     else:
-        draw_field(pdf, "Recibido Por (Nombre):", handover.receiver_name or "N/A", 40, 150, ln=1)
+        draw_field(pdf, "Recibido Por (Nombre):", clean_text(handover.receiver_name or "N/A"), 40, 150, ln=1)
 
     pdf.ln(2)
 
@@ -272,10 +281,10 @@ def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
         pdf.cell(190, 6, "No aplica / Ninguno", border=1, ln=1, align='C')
     else:
         for eq in final_equipment:
-            pdf.cell(30, 6, eq.get_type_display()[:15], border=1)
-            pdf.cell(40, 6, eq.brand[:20], border=1)
-            pdf.cell(50, 6, eq.model[:25], border=1)
-            pdf.cell(70, 6, eq.serial_number, border=1, ln=1)
+            pdf.cell(30, 6, clean_text(eq.get_type_display()[:15]), border=1)
+            pdf.cell(40, 6, clean_text(eq.brand[:20]), border=1)
+            pdf.cell(50, 6, clean_text(eq.model[:25]), border=1)
+            pdf.cell(70, 6, clean_text(eq.serial_number), border=1, ln=1)
 
     pdf.ln(2)
 
@@ -298,16 +307,16 @@ def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
     else:
         for p in final_peripherals:
             serial = p.serial_number if p.serial_number else p.get_status_display()
-            pdf.cell(30, 6, p.get_type_display()[:15], border=1)
-            pdf.cell(40, 6, p.brand[:20], border=1)
-            pdf.cell(50, 6, p.model[:25], border=1)
-            pdf.cell(70, 6, serial, border=1, ln=1)
+            pdf.cell(30, 6, clean_text(p.get_type_display()[:15]), border=1)
+            pdf.cell(40, 6, clean_text(p.brand[:20]), border=1)
+            pdf.cell(50, 6, clean_text(p.model[:25]), border=1)
+            pdf.cell(70, 6, clean_text(serial), border=1, ln=1)
 
     pdf.ln(2)
     
     # ... 4. OBSERVACIONES ...
     draw_section_title(pdf, "4. OBSERVACIONES")
-    pdf.multi_cell(0, 5, handover.observations or "Sin observaciones adicionales.", border=1)
+    pdf.multi_cell(0, 5, clean_text(handover.observations or "Sin observaciones adicionales."), border=1)
     
     pdf.ln(20) # Space for signatures
 
@@ -329,7 +338,7 @@ def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
     pdf.cell(70, 5, "ENTREGADO POR:", align='C', ln=1)
     pdf.set_x(20)
     pdf.set_font("Arial", '', 8)
-    pdf.cell(70, 5, tech_name, align='C', ln=1)
+    pdf.cell(70, 5, clean_text(tech_name), align='C', ln=1)
     
     # Right: Receiver
     pdf.line(120, y_sig, 190, y_sig)
@@ -343,8 +352,6 @@ def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
         
     pdf.set_x(120)
     pdf.set_font("Arial", '', 8)
-    pdf.cell(70, 5, receiver_label or "_________", align='C', ln=1)
+    pdf.cell(70, 5, clean_text(receiver_label or "_________"), align='C', ln=1)
 
-    output = io.BytesIO()
-    pdf.output(output)
-    return output.getvalue()
+    return pdf.output(dest='S').encode('latin-1')

@@ -24,6 +24,7 @@ urlpatterns = [
     path('inventory/costcenters/', views.cost_center_list_view, name='cost_center_list'),
     path('inventory/costcenters/<int:pk>/edit/', views.cost_center_edit_view, name='cost_center_edit'),
     path('maintenance/new/', views.maintenance_create_view, name='maintenance_create'),
+    path('maintenance/<int:pk>/success/', views.maintenance_success_view, name='maintenance_success'),
     path('clients/new/', views.client_create_view, name='client_create'),
     path('handovers/new/', views.handover_create_view, name='handover_create'),
     path('handovers/<int:pk>/success/', views.handover_success_view, name='handover_success'),

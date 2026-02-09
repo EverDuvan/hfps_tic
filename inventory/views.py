@@ -242,7 +242,7 @@ def maintenance_create_view(request):
                 print(f"Error syncing schedule: {e}")
             # --------------------------
 
-            return redirect('inventory:maintenance_list')
+            return redirect('inventory:maintenance_success', pk=maintenance.pk)
     else:
         form = MaintenanceForm()
             
@@ -482,6 +482,10 @@ def handover_create_view(request):
 @login_required
 def handover_success_view(request, pk):
     return render(request, 'inventory/handover_success.html', {'pk': pk})
+
+@login_required
+def maintenance_success_view(request, pk):
+    return render(request, 'inventory/maintenance_success.html', {'pk': pk})
 
 @login_required
 def maintenance_list_view(request):
