@@ -539,33 +539,7 @@ def handover_list_view(request):
     }
     return render(request, 'inventory/handover_list.html', context)
 
-@login_required
-def maintenance_schedule_view(request):
-    year = int(request.GET.get('year', 2025))
-    
-    # Grid structure: [Month 1..12][Week 1..4]
-    weeks = [1, 2, 3, 4]
-    months = [
-        (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
-        (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
-        (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
-    ]
-    
-    # Fetch all equipment, ordered by Area then Serial
-    equipments = Equipment.objects.all().select_related('area').order_by('area__name', 'serial_number')
-    
-    # Fetch existing schedules
-    schedules = MaintenanceSchedule.objects.filter(year=year)
-    
-    # Create a lookup map: (equipment_id, month, week) -> status
-    schedule_map = {}
-    for s in schedules:
-        schedule_map[(s.equipment_id, s.month, s.week_number)] = s.status
-        
-    # Prepare data for template
-    # grid_data list of dicts: { equipment: eq, schedule: { (m,w): status } } 
-    # Actually efficiently we can access map in template via custom tag or just organizing data better
-    # Let's pass the map as a JSON object or restructure it.
+
 @login_required
 def maintenance_schedule_view(request):
     year = int(request.GET.get('year', timezone.now().year))
@@ -987,7 +961,7 @@ def export_report_pdf(request):
     # FPDF 1.7.2 in Python 3 returns a string for dest='S'. 
     # Must encode to latin-1 to get the correct binary bytes for the response.
     # Otherwise Django/Python utf-8 encoding corrupts the PDF structure, resulting in a blank or invalid file.
-    pdf_content = bytes(pdf.output())
+    pdf_content = pdf.output(dest='S').encode('latin-1')
     response.write(pdf_content)
     
     return response

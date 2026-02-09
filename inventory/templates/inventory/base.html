@@ -59,13 +59,7 @@
                 👥 Usuarios
             </a>
             {% endif %}
-            <form action="{% url 'logout' %}" method="post" style="margin-top: auto; padding-top: 2rem;">
-                {% csrf_token %}
-                <button type="submit" class="logout-btn"
-                    style="background: none; border: none; color: #ef4444; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.75rem 1rem; text-decoration: none;">
-                    🚪 Cerrar Sesión
-                </button>
-            </form>
+
         </div>
     </nav>
 
@@ -74,7 +68,51 @@
             <h1>{% block page_title %}Dashboard{% endblock %}</h1>
             <div>
                 {% if user.is_authenticated %}
-                <span>Hola, {{ user.username }}</span>
+                <div class="user-menu" style="position: relative; display: inline-block;">
+                    <button onclick="toggleUserMenu()" class="btn-user-menu"
+                        style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; color: #374151; padding: 0.5rem;">
+                        <span
+                            style="background: #e5e7eb; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #4b5563;">
+                            {{ user.username|first|upper }}
+                        </span>
+                        <span>{{ user.username }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            viewBox="0 0 16 16">
+                            <path fill-rule="evenodd"
+                                d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
+                        </svg>
+                    </button>
+                    <!-- Dropdown Content -->
+                    <div id="userDropdown"
+                        style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 220px; z-index: 50; overflow: hidden; margin-top: 0.5rem;">
+                        <div style="padding: 1rem; border-bottom: 1px solid #f3f4f6;">
+                            <p style="margin: 0; font-weight: 600; color: #111827;">{{ user.first_name }} {{
+                                user.last_name }}</p>
+                            <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">{{ user.email }}</p>
+                        </div>
+
+                        <!-- Actions -->
+                        <!-- Switch User (Logout then redirect to login) -->
+                        <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'login' %}">
+                            <button type="submit"
+                                style="width: 100%; text-align: left; background: none; border: none; padding: 0.75rem 1rem; cursor: pointer; color: #374151; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem;">
+                                🔄 Cambiar de Usuario
+                            </button>
+                        </form>
+
+                        <!-- Logout -->
+                        <form action="{% url 'logout' %}" method="post"
+                            style="margin: 0; border-top: 1px solid #f3f4f6;">
+                            {% csrf_token %}
+                            <button type="submit"
+                                style="width: 100%; text-align: left; background: none; border: none; padding: 0.75rem 1rem; cursor: pointer; color: #ef4444; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem;">
+                                🚪 Cerrar Sesión
+                            </button>
+                        </form>
+                    </div>
+                </div>
                 {% else %}
                 <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
                 {% endif %}
@@ -86,6 +124,26 @@
     </main>
 
     <script src="{% static 'js/main.js' %}"></script>
+    <script>
+        function toggleUserMenu() {
+            const menu = document.getElementById('userDropdown');
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                menu.style.display = 'block';
+            } else {
+                menu.style.display = 'none';
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (event) {
+            const menu = document.getElementById('userDropdown');
+            const btn = document.querySelector('.btn-user-menu');
+
+            if (menu && btn && !menu.contains(event.target) && !btn.contains(event.target)) {
+                menu.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -94,30 +94,49 @@
     }
 </style>
 
-<div class="card" style="margin-bottom: 1rem;">
-    <form method="get" action="">
-        <label>Año: </label>
-        <select name="year" onchange="this.form.submit()"
-            style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-            {% for y in available_years %}
-            <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
-            {% endfor %}
-        </select>
-    </form>
-</div>
 
 <div
-    style="display: flex; gap: 1.5rem; margin-bottom: 1rem; align-items: center; padding: 0.5rem 1rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb; width: fit-content;">
-    <span style="font-size: 0.9rem; font-weight: 600; color: #374151; margin-right: 0.5rem;">Convenciones:</span>
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <span
-            style="width: 16px; height: 16px; background-color: #3b82f6; border-radius: 4px; display: inline-block;"></span>
-        <span style="font-size: 0.85rem; color: #4b5563;">Programados</span>
+    style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+    <!-- Year Selection -->
+    <div class="card" style="margin-bottom: 0;">
+        <form method="get" action="">
+            <label>Año: </label>
+            <select name="year" onchange="this.form.submit()"
+                style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                {% for y in available_years %}
+                <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </form>
     </div>
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <span
-            style="width: 16px; height: 16px; background-color: #10b981; border-radius: 4px; display: inline-block;"></span>
-        <span style="font-size: 0.85rem; color: #4b5563;">Realizados</span>
+
+    <!-- View Selection -->
+    <div style="display: flex; gap: 0.5rem;">
+        <button onclick="setView('all')" class="btn-view" id="btn-all"
+            style="padding: 0.5rem 1rem; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Todo
+            el Año</button>
+        <button onclick="setView('s1')" class="btn-view" id="btn-s1"
+            style="padding: 0.5rem 1rem; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Semestre
+            1 (Ene-Jun)</button>
+        <button onclick="setView('s2')" class="btn-view" id="btn-s2"
+            style="padding: 0.5rem 1rem; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Semestre
+            2 (Jul-Dic)</button>
+    </div>
+
+    <!-- Legend -->
+    <div
+        style="display: flex; gap: 1.5rem; align-items: center; padding: 0.5rem 1rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb; width: fit-content;">
+        <span style="font-size: 0.9rem; font-weight: 600; color: #374151; margin-right: 0.5rem;">Convenciones:</span>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span
+                style="width: 16px; height: 16px; background-color: #3b82f6; border-radius: 4px; display: inline-block;"></span>
+            <span style="font-size: 0.85rem; color: #4b5563;">Programados</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span
+                style="width: 16px; height: 16px; background-color: #10b981; border-radius: 4px; display: inline-block;"></span>
+            <span style="font-size: 0.85rem; color: #4b5563;">Realizados</span>
+        </div>
     </div>
 </div>
 
@@ -128,13 +147,15 @@
                 <th rowspan="2" class="sticky-col sticky-header-top" style="z-index: 30; top:0; left:0;">Equipo / Área
                 </th>
                 {% for m_num, m_name in months %}
-                <th colspan="4" class="month-header sticky-header">{{ m_name }}</th>
+                <th colspan="4" class="month-header sticky-header col-month col-month-{{ m_num }}"
+                    data-month="{{ m_num }}">{{ m_name }}</th>
                 {% endfor %}
             </tr>
             <tr>
                 {% for m_num, m_name in months %}
                 {% for w in weeks %}
-                <th class="week-header sticky-header" style="top: 2rem;">S{{ w }}</th>
+                <th class="week-header sticky-header col-month col-month-{{ m_num }}" data-month="{{ m_num }}"
+                    style="top: 2rem;">S{{ w }}</th>
                 {% endfor %}
                 {% endfor %}
             </tr>
@@ -149,7 +170,7 @@
 
                 {% for month_data in eq.schedule_row %}
                 {% for w_data in month_data.weeks %}
-                <td class="cell-slot {% if w_data.data %}status-{{ w_data.data.status }}{% endif %}"
+                <td class="cell-slot col-month col-month-{{ w_data.month }} {% if w_data.data %}status-{{ w_data.data.status }}{% endif %}"
                     data-eq="{{ eq.id }}" data-month="{{ w_data.month }}" data-week="{{ w_data.week }}"
                     data-date="{{ w_data.data.date|default:'' }}" onclick="toggleSchedule(this)">
                     {% if w_data.data %}{{ w_data.data.day }}{% endif %}
@@ -234,6 +255,7 @@
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}" // Ensure CSRF token is sent
             },
             body: JSON.stringify({
                 equipment_id: eqId,
@@ -254,6 +276,7 @@
                     currentCell.classList.remove('status-PENDING', 'status-COMPLETED');
                     currentCell.innerText = "";
                     currentCell.removeAttribute('data-date');
+                    closeModal(); // Also close modal on delete
                 } else if (data.error) {
                     alert("Error: " + data.error);
                 }
@@ -263,5 +286,46 @@
                 alert("Error de conexión");
             });
     }
+
+    // View Switching Logic
+    function setView(mode) {
+        // Reset buttons style
+        document.querySelectorAll('.btn-view').forEach(btn => {
+            btn.style.background = '#fff';
+            btn.style.color = '#374151';
+            btn.style.borderColor = '#e5e7eb';
+        });
+
+        // Highlight active button
+        const activeBtn = document.getElementById('btn-' + mode);
+        if (activeBtn) {
+            activeBtn.style.background = '#2563eb'; // Blue 600
+            activeBtn.style.color = 'white';
+            activeBtn.style.borderColor = '#2563eb';
+        }
+
+        // Show/Hide Columns
+        const allMonthCols = document.querySelectorAll('.col-month');
+        allMonthCols.forEach(col => {
+            const m = parseInt(col.getAttribute('data-month'));
+
+            if (mode === 'all') {
+                col.style.display = '';
+            } else if (mode === 's1') {
+                if (m >= 1 && m <= 6) col.style.display = '';
+                else col.style.display = 'none';
+            } else if (mode === 's2') {
+                if (m >= 7 && m <= 12) col.style.display = '';
+                else col.style.display = 'none';
+            }
+        });
+    }
+
+    // Initialize Default View (Current Semester)
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentMonth = new Date().getMonth() + 1; // 1-12
+        if (currentMonth <= 6) setView('s1');
+        else setView('s2');
+    });
 </script>
 {% endblock %}
