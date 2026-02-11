@@ -3,6 +3,7 @@ import openpyxl
 from django.http import HttpResponse
 from fpdf import FPDF
 import io
+import re
 
 def clean_text(text):
     if text is None:
@@ -24,7 +25,7 @@ def export_to_excel(queryset, model_admin, request):
 
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = str(meta.verbose_name_plural)[:31]
+    ws.title = re.sub(r'[\\/*?:\[\]]', '', str(meta.verbose_name_plural))[:31]
 
     # Header
     ws.append(field_names)
