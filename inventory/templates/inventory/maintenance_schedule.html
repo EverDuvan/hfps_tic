@@ -124,12 +124,15 @@
         <button onclick="setView('all')" class="btn-view" id="btn-all"
             style="padding: 0.5rem 1rem; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Todo
             el Año</button>
-        <button onclick="setView('s1')" class="btn-view" id="btn-s1"
-            style="padding: 0.5rem 1rem; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Semestre
-            1 (Ene-Jun)</button>
-        <button onclick="setView('s2')" class="btn-view" id="btn-s2"
-            style="padding: 0.5rem 1rem; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Semestre
-            2 (Jul-Dic)</button>
+        <button onclick="setView('p1')" class="btn-view" id="btn-p1"
+            style="padding: 0.5rem 1rem; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">C1
+            (Ene-Abr)</button>
+        <button onclick="setView('p2')" class="btn-view" id="btn-p2"
+            style="padding: 0.5rem 1rem; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">C2
+            (May-Ago)</button>
+        <button onclick="setView('p3')" class="btn-view" id="btn-p3"
+            style="padding: 0.5rem 1rem; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">C3
+            (Sep-Dic)</button>
     </div>
 
     <!-- Legend -->
@@ -320,21 +323,26 @@
 
             if (mode === 'all') {
                 col.style.display = '';
-            } else if (mode === 's1') {
-                if (m >= 1 && m <= 6) col.style.display = '';
+            } else if (mode === 'p1') {
+                if (m >= 1 && m <= 4) col.style.display = '';
                 else col.style.display = 'none';
-            } else if (mode === 's2') {
-                if (m >= 7 && m <= 12) col.style.display = '';
+            } else if (mode === 'p2') {
+                if (m >= 5 && m <= 8) col.style.display = '';
+                else col.style.display = 'none';
+            } else if (mode === 'p3') {
+                if (m >= 9 && m <= 12) col.style.display = '';
                 else col.style.display = 'none';
             }
         });
     }
 
-    // Initialize Default View (Current Semester)
+    // Initialize Default View (Current Period)
     document.addEventListener('DOMContentLoaded', () => {
         const currentMonth = new Date().getMonth() + 1; // 1-12
-        if (currentMonth <= 6) setView('s1');
-        else setView('s2');
+
+        if (currentMonth <= 4) setView('p1');
+        else if (currentMonth <= 8) setView('p2');
+        else setView('p3');
     });
 </script>
 {% endblock %}
