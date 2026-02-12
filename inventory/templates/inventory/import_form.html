@@ -1,0 +1,50 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Importar Equipos{% endblock %}
+{% block page_title %}Importar desde Excel{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <p style="margin-bottom: 1rem; color: #4b5563;">
+            Sube un archivo Excel (.xlsx) con las siguientes columnas en orden (fila 1 encabezados, datos desde fila 2):
+        </p>
+        <ul style="list-style-type: disc; margin-left: 2rem; color: #6b7280; font-size: 0.9rem;">
+            <li><strong>Columna A:</strong> Serial (Obligatorio)</li>
+            <li><strong>Columna B:</strong> Tipo (ej. PC, LAPTOP)</li>
+            <li><strong>Columna C:</strong> Marca</li>
+            <li><strong>Columna D:</strong> Modelo</li>
+            <li><strong>Columna E:</strong> Nombre del Área</li>
+            <li><strong>Columna F:</strong> Estado (ACTIVE, STORAGE, DAMAGED)</li>
+        </ul>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div
+            style="padding: 1rem; background-color: #fee2e2; color: #b91c1c; border-radius: 0.5rem; margin-bottom: 1rem;">
+            {{ form.non_field_errors }}
+            {% for field in form %}
+            {% for error in field.errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Archivo Excel</label>
+            {{ form.excel_file }}
+            <p style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">{{ form.excel_file.help_text }}</p>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">Subir e Importar</button>
+            <a href="{% url 'inventory:equipment_list' %}" class="btn"
+                style="background-color: #9ca3af; color: white;">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

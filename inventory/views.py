@@ -12,6 +12,11 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from urllib.parse import urlencode
+from django.urls import reverse
+import qrcode
+import openpyxl
+from .forms import ExcelImportForm
 
 @login_required
 def maintenance_acta_view(request, pk):
@@ -128,9 +133,17 @@ def dashboard_view(request):
     recent_maintenance = Maintenance.objects.order_by('-date')[:5]
     recent_handovers = Handover.objects.order_by('-date')[:5]
     
-    # Chart Data
-    status_data = list(Equipment.objects.values('status').annotate(count=Count('status')))
-    type_data = list(Equipment.objects.values('type').annotate(count=Count('type')))
+    # Chart Data Preparation
+    from .choices import EQUIPMENT_STATUS_CHOICES, EQUIPMENT_TYPE_CHOICES
+    status_dict = dict(EQUIPMENT_STATUS_CHOICES)
+    type_dict = dict(EQUIPMENT_TYPE_CHOICES)
+
+    raw_status_data = Equipment.objects.values('status').annotate(count=Count('status'))
+    status_data = [{'status': status_dict.get(item['status'], item['status']), 'count': item['count']} for item in raw_status_data]
+
+    raw_type_data = Equipment.objects.values('type').annotate(count=Count('type'))
+    type_data = [{'type': type_dict.get(item['type'], item['type']), 'count': item['count']} for item in raw_type_data]
+
     area_data = list(Equipment.objects.exclude(area__isnull=True).values('area__name').annotate(count=Count('id')).order_by('-count')[:5])
 
     context = {
@@ -145,6 +158,92 @@ def dashboard_view(request):
         'area_data': area_data,
     }
     return render(request, 'inventory/dashboard.html', context)
+
+@login_required
+def generate_qr_view(request, pk):
+    # Just verify existence
+    equipment = get_object_or_404(Equipment, pk=pk)
+    
+    # URL to the detail page (absolute)
+    url = request.build_absolute_uri(reverse('inventory:equipment_detail', args=[pk]))
+    
+    # Construct data as URL parameters so it opens automatically
+    # but still contains readable info in the URL string
+    params = {
+        'serial': equipment.serial_number,
+        'model': f"{equipment.brand} {equipment.model}",
+        'type': equipment.get_type_display(),
+        'area': equipment.area.name if equipment.area else 'N/A',
+        'status': equipment.get_status_display()
+    }
+    
+    full_url = f"{url}?{urlencode(params)}"
+
+    # Create QR with higher error correction
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(full_url)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    response = HttpResponse(content_type="image/png")
+    img.save(response, "PNG")
+    return response
+
+@login_required
+def import_equipment_view(request):
+    if request.method == 'POST':
+        form = ExcelImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                wb = openpyxl.load_workbook(request.FILES['excel_file'])
+                ws = wb.active
+                
+                # Assume headers are row 1, data starts row 2
+                imported_count = 0
+                errors = []
+                
+                for index, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    # Format: Serial (0), Type (1), Brand (2), Model (3), Area (4), Status (5)
+                    serial = str(row[0]).strip() if row[0] else None
+                    if not serial: continue # Skip empty rows
+                    
+                    eq_type = str(row[1]).upper() if row[1] else 'PC'
+                    brand = str(row[2]).strip() if row[2] else 'Genérico'
+                    model = str(row[3]).strip() if row[3] else 'Genérico'
+                    area_name = str(row[4]).strip() if row[4] else None
+                    status = str(row[5]).upper() if row[5] else 'ACTIVE'
+                    
+                    # Resolve Area
+                    area = None
+                    if area_name:
+                        area, _ = Area.objects.get_or_create(name=area_name)
+                    
+                    # Create or Update
+                    obj, created = Equipment.objects.update_or_create(
+                        serial_number=serial,
+                        defaults={
+                            'type': eq_type,
+                            'brand': brand,
+                            'model': model,
+                            'area': area,
+                            'status': status
+                        }
+                    )
+                    imported_count += 1
+                
+                return render(request, 'inventory/import_success.html', {'count': imported_count})
+            
+            except Exception as e:
+                form.add_error(None, f"Error procesando el archivo: {str(e)}")
+    else:
+        form = ExcelImportForm()
+        
+    return render(request, 'inventory/import_form.html', {'form': form, 'title': 'Importar Equipos'})
 
 @login_required
 def equipment_list_view(request):
@@ -554,6 +653,11 @@ def maintenance_schedule_view(request):
     
     equipments = Equipment.objects.all().select_related('area').order_by('area__name', 'serial_number')
     
+    # Filter by Area
+    area_id = request.GET.get('area')
+    if area_id:
+        equipments = equipments.filter(area_id=area_id)
+
     # Fetch schedules for the year
     schedules = MaintenanceSchedule.objects.filter(scheduled_date__year=year)
     
@@ -593,12 +697,16 @@ def maintenance_schedule_view(request):
     start_year = current_actual_years
     available_years = range(start_year, start_year + 21)
 
+    areas = Area.objects.all()
+
     context = {
         'year': year,
         'months': months,
         'equipments': equipments,
         'weeks': weeks,
         'available_years': available_years,
+        'areas': areas,
+        'current_area': int(area_id) if area_id and area_id.isdigit() else None,
     }
     return render(request, 'inventory/maintenance_schedule.html', context)
 

@@ -20,8 +20,9 @@
         </span>
     </div>
     
-    <div style=" margin-bottom: 2rem;">
+    <div style=" margin-bottom: 2rem; display: flex; gap: 1rem;">
             <a href="{% url 'inventory:equipment_edit' equipment.pk %}" class="btn btn-primary">✏️ Editar Equipo</a>
+            <a href="{% url 'inventory:equipment_qr' equipment.pk %}" target="_blank" class="btn" style="background-color: #4b5563; color: white;">📱 Ver QR</a>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">

@@ -12,7 +12,9 @@ urlpatterns = [
     
     # Frontend URLs
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('inventory/import/', views.import_equipment_view, name='import_equipment'),
     path('inventory/', views.equipment_list_view, name='equipment_list'),
+    path('inventory/equipment/<int:pk>/qr/', views.generate_qr_view, name='equipment_qr'),
     path('inventory/equipment/<int:pk>/', views.equipment_detail_view, name='equipment_detail'),
     path('inventory/equipment/<int:pk>/edit/', views.equipment_edit_view, name='equipment_edit'),
     path('inventory/new/', views.equipment_create_view, name='equipment_create'),

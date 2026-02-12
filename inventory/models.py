@@ -1,4 +1,5 @@
 from django.db import models
+from simple_history.models import HistoricalRecords
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
@@ -90,7 +91,9 @@ class Equipment(models.Model):
     support_phone = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Teléfono Soporte"))
 
     created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         return f"{self.get_type_display()} - {self.brand} {self.model} ({self.serial_number})"
@@ -156,6 +159,7 @@ class Maintenance(models.Model):
     hw_keyboard_mouse = models.BooleanField(default=False, verbose_name=_("Limpieza Teclado/Mouse"))
     hw_screen = models.BooleanField(default=False, verbose_name=_("Limpieza Pantalla"))
     hw_reassembly = models.BooleanField(default=False, verbose_name=_("Ensamble y Pruebas"))
+    history = HistoricalRecords()
 
     def save(self, *args, **kwargs):
         # Determine if we need to generate the PDF

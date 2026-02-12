@@ -144,3 +144,10 @@ class HandoverForm(forms.ModelForm):
         # But keeping all is safer for flexibility
         pass
 
+class ExcelImportForm(forms.Form):
+    excel_file = forms.FileField(label="Archivo Excel (.xlsx)", help_text="Formato esperado: Serial, Tipo, Marca, Modelo, Área, Estado")
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['excel_file'].widget.attrs.update({'class': 'form-control'})
+

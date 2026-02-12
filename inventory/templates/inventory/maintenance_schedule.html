@@ -107,6 +107,15 @@
                 <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
                 {% endfor %}
             </select>
+
+            <label style="margin-left: 1rem;">Área: </label>
+            <select name="area" onchange="this.form.submit()"
+                style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Todas --</option>
+                {% for area in areas %}
+                <option value="{{ area.id }}" {% if current_area == area.id %}selected{% endif %}>{{ area.name }}</option>
+                {% endfor %}
+            </select>
         </form>
     </div>
 
