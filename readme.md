@@ -111,3 +111,7 @@ Siga estos pasos para configurar el proyecto en su entorno local.
 ## 📄 Licencia
 
 Este proyecto es propiedad de Ever Duvan Hernandez y está destinado para uso interno exclusivo del departamento de TIC.
+
+ubuntu aws
+
+ssh -i hfps_aws.pem ubuntu@34.207.116.83
