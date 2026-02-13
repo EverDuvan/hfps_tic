@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
-from .models import Area, Equipment, Peripheral, Maintenance, Handover, CostCenter, Client, Technician
+from .models import Area, Equipment, Peripheral, Maintenance, Handover, CostCenter, Client, Technician, PeripheralType, HandoverPeripheral
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from .utils import export_to_excel
@@ -53,9 +53,14 @@ class EquipmentAdmin(admin.ModelAdmin):
     )
     actions = [export_as_excel_action]
 
+@admin.register(PeripheralType)
+class PeripheralTypeAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
+
 @admin.register(Peripheral)
 class PeripheralAdmin(admin.ModelAdmin):
-    list_display = ('type', 'brand', 'model', 'area', 'connected_to', 'status')
+    list_display = ('type', 'brand', 'model', 'quantity', 'area', 'connected_to', 'status')
     list_filter = ('type', 'status', 'area')
     search_fields = ('serial_number', 'brand', 'model')
     actions = [export_as_excel_action]
@@ -107,8 +112,13 @@ class MaintenanceAdmin(admin.ModelAdmin):
         return format_html('<a class="button" href="{}" target="_blank">Generar Acta</a>', url)
     acta_link.short_description = "Acta"
 
+class HandoverPeripheralInline(admin.TabularInline):
+    model = HandoverPeripheral
+    extra = 1
+
 @admin.register(Handover)
 class HandoverAdmin(admin.ModelAdmin):
+    inlines = [HandoverPeripheralInline]
     list_display = ('date', 'type', 'source_area', 'destination_area', 'technician', 'receiver_name', 'acta_link')
     list_filter = ('type', 'date', 'source_area', 'destination_area')
     search_fields = ('receiver_name', 'technician__username', 'technician__first_name', 'technician__last_name')

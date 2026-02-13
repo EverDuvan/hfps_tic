@@ -2,10 +2,10 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, FileResponse, Http404
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter, MaintenanceSchedule
+from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter, MaintenanceSchedule, HandoverPeripheral
 from .utils import generate_maintenance_pdf, generate_handover_pdf, export_to_excel
 from django.apps import apps
-from .forms import MaintenanceForm, EquipmentForm, AreaForm, CostCenterForm, CustomUserCreationForm, PeripheralForm, HandoverForm, ClientForm
+from .forms import MaintenanceForm, EquipmentForm, AreaForm, CostCenterForm, CustomUserCreationForm, PeripheralForm, HandoverForm, ClientForm, PeripheralTypeForm
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
@@ -17,6 +17,7 @@ from django.urls import reverse
 import qrcode
 import openpyxl
 from .forms import ExcelImportForm
+from django.forms import inlineformset_factory
 
 @login_required
 def maintenance_acta_view(request, pk):
@@ -526,6 +527,21 @@ def peripheral_edit_view(request, pk):
     return render(request, 'inventory/peripheral_form.html', {'form': form, 'title': f'Editar {peripheral.brand} {peripheral.model}'})
 
 @login_required
+def peripheral_type_create_view(request):
+    if request.method == 'POST':
+        form = PeripheralTypeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+            return redirect('inventory:peripheral_list')
+    else:
+        form = PeripheralTypeForm()
+    
+    return render(request, 'inventory/peripheral_type_form.html', {'form': form})
+
+@login_required
 def client_create_view(request):
     if request.method == 'POST':
         form = ClientForm(request.POST)
@@ -542,9 +558,23 @@ def client_create_view(request):
 
 @login_required
 def handover_create_view(request):
+    from django import forms # ensure forms is available or import at top
+    HandoverPeripheralFormSet = inlineformset_factory(
+        Handover, HandoverPeripheral,
+        fields=('peripheral', 'quantity'),
+        extra=1,
+        can_delete=True,
+        widgets={
+            'peripheral': forms.Select(attrs={'class': 'form-select'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'style': 'width: 80px;'}),
+        }
+    )
+    
     if request.method == 'POST':
         form = HandoverForm(request.POST)
-        if form.is_valid():
+        formset = HandoverPeripheralFormSet(request.POST)
+        
+        if form.is_valid() and formset.is_valid():
             # Check if it's a preview or save
             action = request.POST.get('action', 'save')
             
@@ -552,17 +582,27 @@ def handover_create_view(request):
                 # Create a temporary instance without saving
                 handover = form.save(commit=False)
                 handover.technician = request.user
-                handover.date = timezone.now() # Manually set date for preview since auto_now_add won't trigger yet
+                handover.date = timezone.now() 
                 
-                # Get selected M2M objects directly from cleaned_data
+                # Get equipment from form
                 selected_equipment = form.cleaned_data.get('equipment')
-                selected_peripherals = form.cleaned_data.get('peripherals')
                 
-                # Generate PDF with these explicitly provided lists
-                pdf_content = generate_handover_pdf(handover, equipment_list=selected_equipment, peripheral_list=selected_peripherals)
+                # Construct preview peripherals list from formset
+                preview_peripherals = []
+                for f in formset:
+                    if f.cleaned_data and not f.cleaned_data.get('DELETE', False):
+                        p = f.cleaned_data.get('peripheral')
+                        q = f.cleaned_data.get('quantity')
+                        if p and q:
+                            # Create a simple object with required attributes
+                            class PreviewHP:
+                                peripheral = p
+                                quantity = q
+                            preview_peripherals.append(PreviewHP())
+                
+                pdf_content = generate_handover_pdf(handover, equipment_list=selected_equipment, peripheral_list=preview_peripherals)
                 
                 response = HttpResponse(pdf_content, content_type='application/pdf')
-                # inline = open in browser, attachment = download
                 response['Content-Disposition'] = 'inline; filename="vista_previa_acta.pdf"'
                 return response
             
@@ -572,11 +612,41 @@ def handover_create_view(request):
                 handover.technician = request.user
                 handover.save()
                 form.save_m2m() 
+                
+                instances = formset.save(commit=False)
+                for instance in instances:
+                    instance.handover = handover
+                    # Decrement Stock Logic
+                    # We assume quantity is positive (validated by model/form)
+                    if instance.peripheral.quantity >= instance.quantity:
+                        instance.peripheral.quantity -= instance.quantity
+                    else:
+                        # Should we block? Or allow negative/zero?
+                        # Let's set to 0 to avoid negative stock if strict, or allow negative if configured.
+                        # For simple inventory, stick to 0 floor or let it go negative?
+                        # Implementing simple floor 0 for now.
+                        instance.peripheral.quantity = max(0, instance.peripheral.quantity - instance.quantity)
+                    
+                    instance.peripheral.save()
+                    instance.save()
+                
                 return redirect('inventory:handover_success', pk=handover.pk)
     else:
         form = HandoverForm()
+        formset = HandoverPeripheralFormSet()
     
-    return render(request, 'inventory/handover_form.html', {'form': form, 'title': 'Nueva Entrega / Acta'})
+    # Create mappings for JS auto-selection
+    equipment_area_map = {e.id: e.area_id for e in Equipment.objects.all() if e.area_id}
+    peripheral_area_map = {p.id: p.area_id for p in Peripheral.objects.all() if p.area_id}
+    
+    context = {
+        'form': form, 
+        'formset': formset, 
+        'title': 'Nueva Entrega / Acta',
+        'equipment_area_map': json.dumps(equipment_area_map),
+        'peripheral_area_map': json.dumps(peripheral_area_map)
+    }
+    return render(request, 'inventory/handover_form.html', context)
 
 @login_required
 def handover_success_view(request, pk):
@@ -818,10 +888,13 @@ def reports_dashboard_view(request):
 
 def export_report_pdf(request):
     import datetime
+    import tempfile
+    import os
     from fpdf import FPDF
     from django.http import HttpResponse
     from django.db.models import Count
-    
+    from .charts import generate_equipment_by_type_chart, generate_maintenance_by_type_chart, generate_equipment_status_chart
+
     # 1. Date Filtering (Same logic as dashboard)
     today = timezone.now().date()
     start_str = request.GET.get('start_date', '')
@@ -856,15 +929,33 @@ def export_report_pdf(request):
     # Warranties expiring next 90 days
     limit_date = today + datetime.timedelta(days=90)
     warranty_expiring = equipments.filter(warranty_expiry__range=[today, limit_date]).order_by('warranty_expiry')
+    
+    # Data for Charts
+    eq_by_type_data = list(equipments.values('type').annotate(count=Count('type')).order_by('-count'))
+    m_by_type_data = list(maintenances.values('maintenance_type').annotate(count=Count('id')))
+    eq_by_status_data = list(equipments.values('status').annotate(count=Count('status')))
 
     # 3. Generate PDF
     class PDF(FPDF):
         def header(self):
+            # Logo
+            # Assuming static files are collected or accessible.
+            from django.conf import settings
+            logo_path = os.path.join(settings.BASE_DIR, 'inventory', 'static', 'img', 'hfps.jpg')
+            if not os.path.exists(logo_path):
+                logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'hfps.jpg')
+            
+            if os.path.exists(logo_path):
+                self.image(logo_path, 10, 8, 33)
+                
             self.set_font('Arial', 'B', 15)
-            self.cell(0, 10, 'Reporte de Gestión de Inventario y Mantenimiento', 0, 1, 'C')
+            self.cell(80) # Move to right
+            self.cell(30, 10, 'Reporte de Gestión', 0, 1, 'C')
+            
             self.set_font('Arial', '', 10)
-            self.cell(0, 5, f'Generado el: {datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}', 0, 1, 'C')
-            self.ln(10)
+            self.cell(80)
+            self.cell(30, 5, f'Generado el: {datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}', 0, 1, 'C')
+            self.ln(20)
 
         def footer(self):
             self.set_y(-15)
@@ -887,9 +978,8 @@ def export_report_pdf(request):
     pdf.ln(2)
     
     pdf.set_font('Arial', '', 11)
-    
-    # KPI Grid simulation
     col_width = 45
+    
     pdf.cell(col_width, 10, 'Total Equipos:', 0, 0)
     pdf.set_font('Arial', 'B', 11)
     pdf.cell(col_width, 10, str(total_equipment), 0, 0)
@@ -909,39 +999,55 @@ def export_report_pdf(request):
     pdf.set_font('Arial', 'B', 11)
     pdf.cell(col_width, 10, str(handover_count), 0, 1)
     pdf.ln(5)
-
-    # --- Maintenance Summary ---
+    
+    # --- Charts Section ---
     pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 10, '2. Resumen de Mantenimientos por Tipo', 0, 1, 'L', fill=True)
+    pdf.cell(0, 10, '2. Gráficos Estadísticos', 0, 1, 'L', fill=True)
     pdf.ln(2)
     
-    m_by_type = list(maintenances.values('maintenance_type').annotate(count=Count('id')))
+    # Helper to clean up temp files
+    temp_files = []
     
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(80, 8, 'Tipo de Mantenimiento', 1)
-    pdf.cell(40, 8, 'Cantidad', 1)
-    pdf.ln()
+    def add_chart_to_pdf(pdf_obj, chart_func, data, title, x, y, w, h):
+        buf = chart_func(data)
+        if buf:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
+                tmp.write(buf.read())
+                tmp_path = tmp.name
+                temp_files.append(tmp_path)
+            
+            pdf_obj.image(tmp_path, x=x, y=y, w=w, h=h)
+            # Add title text above or below? Chart already has title.
+            return True
+        return False
+
+    # Layout: 2 charts side by side, or 1 big one.
+    # Let's put Equipments by Type and Status side by side
     
-    # Import choices locally
-    from .choices import MAINTENANCE_TYPE_CHOICES
+    current_y = pdf.get_y()
     
-    pdf.set_font('Arial', '', 10)
-    if m_by_type:
-        for item in m_by_type:
-            label = dict(MAINTENANCE_TYPE_CHOICES).get(item['maintenance_type'], item['maintenance_type'])
-            pdf.cell(80, 8, str(label), 1)
-            pdf.cell(40, 8, str(item['count']), 1)
-            pdf.ln()
-    else:
-        pdf.cell(120, 8, 'No se registraron mantenimientos en este periodo.', 1)
-        pdf.ln()
+    # Chart 1: Equipment by Type
+    add_chart_to_pdf(pdf, generate_equipment_by_type_chart, eq_by_type_data, "Equipos por Tipo", 10, current_y, 90, 60)
+    
+    # Chart 2: Equipment Status
+    add_chart_to_pdf(pdf, generate_equipment_status_chart, eq_by_status_data, "Estado Equipos", 110, current_y, 70, 70)
+    
+    pdf.set_y(current_y + 75)
+    
+    # Chart 3: Maintenance by Type (if any)
+    if maintenance_count > 0:
+        current_y = pdf.get_y()
+        add_chart_to_pdf(pdf, generate_maintenance_by_type_chart, m_by_type_data, "Mantenimientos", 50, current_y, 110, 70)
+        pdf.set_y(current_y + 75)
+    
     pdf.ln(5)
-    
-    # --- Top Technicians ---
+
+    # --- Maintenance Summary Table ---
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(0, 10, '3. Actividad por Técnico (Top 5)', 0, 1, 'L', fill=True)
     pdf.ln(2)
     
+    # Reuse existing data logic
     top_techs = list(maintenances.values('performed_by__username').annotate(count=Count('id')).order_by('-count')[:5])
     
     pdf.set_font('Arial', 'B', 10)
@@ -953,10 +1059,7 @@ def export_report_pdf(request):
     if top_techs:
         for tech in top_techs:
             username = tech['performed_by__username']
-            # Try to get full name if possible, assuming username is available
-            user_display = username 
-            # (Fetching actual User object for full name would be cleaner but this fits in single view logic)
-            pdf.cell(80, 8, str(user_display).title(), 1)
+            pdf.cell(80, 8, str(username).title(), 1)
             pdf.cell(40, 8, str(tech['count']), 1)
             pdf.ln()
     else:
@@ -1005,6 +1108,8 @@ def export_report_pdf(request):
         pdf.cell(35, 8, 'Técnico', 1)
         pdf.cell(35, 8, 'Descripción', 1)
         pdf.ln()
+        
+        from .choices import MAINTENANCE_TYPE_CHOICES
         
         pdf.set_font('Arial', '', 8)
         for m in maintenances.select_related('equipment', 'performed_by'):
@@ -1069,7 +1174,8 @@ def export_report_pdf(request):
     # FPDF 1.7.2 in Python 3 returns a string for dest='S'. 
     # Must encode to latin-1 to get the correct binary bytes for the response.
     # Otherwise Django/Python utf-8 encoding corrupts the PDF structure, resulting in a blank or invalid file.
-    pdf_content = bytes(pdf.output())
+    # Use dest='S' to ensure string return, then encode.
+    pdf_content = pdf.output(dest='S').encode('latin-1')
     response.write(pdf_content)
     
     return response

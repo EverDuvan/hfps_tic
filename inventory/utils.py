@@ -295,23 +295,46 @@ def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
     pdf.set_font("Arial", 'B', 8)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(30, 6, "TIPO", border=1, fill=True)
-    pdf.cell(40, 6, "MARCA", border=1, fill=True)
-    pdf.cell(50, 6, "MODELO", border=1, fill=True)
-    pdf.cell(70, 6, "SERIAL / ESTADO", border=1, ln=1, fill=True) # Peripherals might not have serials always
+    pdf.cell(35, 6, "MARCA", border=1, fill=True) # Reduced
+    pdf.cell(45, 6, "MODELO", border=1, fill=True) # Reduced
+    pdf.cell(15, 6, "CANT", border=1, fill=True)   # Added
+    pdf.cell(65, 6, "SERIAL / ESTADO", border=1, ln=1, fill=True) # Reduced
     
     pdf.set_font("Arial", size=8)
     
-    final_peripherals = peripheral_list if peripheral_list is not None else handover.peripherals.all()
-    
+    # We expect peripheral_list to be a list of HandoverPeripheral-like objects (having .peripheral and .quantity)
+    # If not provided, fetch from DB using the through model to get quantity
+    if peripheral_list is not None:
+        final_peripherals = peripheral_list
+    else:
+        # Use the through model manager
+        # If handover is saved, we can query HandoverPeripheral
+        if handover.pk:
+            from .models import HandoverPeripheral
+            final_peripherals = HandoverPeripheral.objects.filter(handover=handover)
+        else:
+            final_peripherals = [] # Should not happen unless unsaved handover without list
+
     if not final_peripherals:
          pdf.cell(190, 6, "No aplica / Ninguno", border=1, ln=1, align='C')
     else:
-        for p in final_peripherals:
+        for hp in final_peripherals:
+            # hp might be a HandoverPeripheral instance OR a dict/object from preview
+            # normalize access
+            if hasattr(hp, 'peripheral'):
+                p = hp.peripheral
+                qty = hp.quantity
+            else:
+                # Fallback if passed raw Peripheral objects (should avoid this)
+                p = hp
+                qty = 1
+            
             serial = p.serial_number if p.serial_number else p.get_status_display()
-            pdf.cell(30, 6, clean_text(p.get_type_display()[:15]), border=1)
-            pdf.cell(40, 6, clean_text(p.brand[:20]), border=1)
-            pdf.cell(50, 6, clean_text(p.model[:25]), border=1)
-            pdf.cell(70, 6, clean_text(serial), border=1, ln=1)
+            pdf.cell(30, 6, clean_text(str(p.type)[:15]), border=1)
+            pdf.cell(35, 6, clean_text(p.brand[:20]), border=1)
+            pdf.cell(45, 6, clean_text(p.model[:25]), border=1)
+            pdf.cell(15, 6, str(qty), border=1, align='C')
+            pdf.cell(65, 6, clean_text(serial), border=1, ln=1)
 
     pdf.ln(2)
     

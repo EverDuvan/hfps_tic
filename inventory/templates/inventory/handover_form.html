@@ -78,35 +78,86 @@
         <h3
             style="margin-bottom: 1.5rem; color: #111827; font-size: 1.25rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
             Equipos y Periféricos</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-            <div class="form-group">
-                <label for="{{ form.equipment.id_for_label }}"
-                    style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
-                    {{ form.equipment.label }}
-                </label>
-                {{ form.equipment }}
-                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">Use Ctrl+Click para seleccionar
-                    múltiples.</p>
-                <div id="equipment-preview-list" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px;">
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            <!-- Equipment Section -->
+            <div class="card"
+                style="border: 1px solid #e5e7eb; padding: 1.5rem; border-radius: 0.5rem; background-color: #f9fafb;">
+                <h4 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: #374151;">Selección de Equipos
+                </h4>
+                <div class="form-group">
+                    <label for="{{ form.equipment.id_for_label }}"
+                        style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                        {{ form.equipment.label }}
+                    </label>
+                    {{ form.equipment }}
+                    <p style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">Use Ctrl+Click para seleccionar
+                        múltiples.</p>
+                    <div id="equipment-preview-list"
+                        style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px;"></div>
+                    {% if form.equipment.errors %}
+                    <div style="color: #ef4444; font-size: 0.8rem;">{{ form.equipment.errors }}</div>
+                    {% endif %}
                 </div>
-                {% if form.equipment.errors %}
-                <div style="color: #ef4444; font-size: 0.8rem;">{{ form.equipment.errors }}</div>
-                {% endif %}
             </div>
 
-            <div class="form-group">
-                <label for="{{ form.peripherals.id_for_label }}"
-                    style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
-                    {{ form.peripherals.label }}
-                </label>
-                {{ form.peripherals }}
-                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">Use Ctrl+Click para seleccionar
-                    múltiples.</p>
-                <div id="peripheral-preview-list" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px;">
+            <!-- Peripherals Section -->
+            <div class="card"
+                style="border: 1px solid #e5e7eb; padding: 1.5rem; border-radius: 0.5rem; background-color: #f9fafb;">
+                <h4 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: #374151;">Selección de
+                    Periféricos</h4>
+                <div class="form-group">
+                    {{ formset.management_form }}
+                    <div id="peripherals-formset">
+                        {% for form in formset %}
+                        <div class="peripheral-row"
+                            style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; background-color: white;">
+                            {{ form.id }}
+                            <div style="flex-grow: 1;">
+                                {{ form.peripheral.label_tag }}
+                                {{ form.peripheral }}
+                            </div>
+                            <div style="width: 100px;">
+                                {{ form.quantity.label_tag }}
+                                {{ form.quantity }}
+                            </div>
+                            {% if form.instance.pk %}
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <label for="{{ form.DELETE.id_for_label }}"
+                                    style="margin: 0; font-size: 0.9em; color: #ef4444;">Eliminar</label>
+                                {{ form.DELETE }}
+                            </div>
+                            {% endif %}
+                            {% if form.errors %}
+                            <div style="color: #ef4444; font-size: 0.8rem;">{{ form.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="button" id="add-peripheral-btn" class="btn btn-sm"
+                        style="background-color: #10b981; color: white; margin-top: 5px;">
+                        + Agregar Periférico
+                    </button>
+
+                    <!-- Empty Form Template (Hidden) -->
+                    <div id="empty-form" style="display:none;">
+                        <div class="peripheral-row"
+                            style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; background-color: white;">
+                            {{ formset.empty_form.id }}
+                            <div style="flex-grow: 1;">
+                                {{ formset.empty_form.peripheral }}
+                            </div>
+                            <div style="width: 100px;">
+                                <input type="number" name="handoverperipheral_set-__prefix__-quantity" value="1" min="1"
+                                    class="form-control" style="width: 80px;"
+                                    id="id_handoverperipheral_set-__prefix__-quantity">
+                            </div>
+                            <button type="button" class="btn btn-sm btn-danger remove-row"
+                                style="color: white; background-color: #ef4444; border: none; padding: 2px 8px; border-radius: 4px;">X</button>
+                        </div>
+                    </div>
                 </div>
-                {% if form.peripherals.errors %}
-                <div style="color: #ef4444; font-size: 0.8rem;">{{ form.peripherals.errors }}</div>
-                {% endif %}
             </div>
         </div>
 
@@ -131,11 +182,28 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Data Mappings from View
+        const equipmentAreaMap = JSON.parse('{{ equipment_area_map|escapejs }}');
+        const peripheralAreaMap = JSON.parse('{{ peripheral_area_map|escapejs }}');
+
+        const sourceAreaSelect = document.getElementById('{{ form.source_area.id_for_label }}');
+
+        // Function to update Source Area
+        function updateSourceArea(areaId) {
+            if (areaId && sourceAreaSelect) {
+                sourceAreaSelect.value = areaId;
+                // Highlight change
+                sourceAreaSelect.style.backgroundColor = '#e0f2fe';
+                setTimeout(() => sourceAreaSelect.style.backgroundColor = '', 1000);
+            }
+        }
+
+        // Equipment Selection Logic
         const equipSelect = document.getElementById('{{ form.equipment.id_for_label }}');
-        const periSelect = document.getElementById('{{ form.peripherals.id_for_label }}');
 
         function updatePreview(selectElement, previewContainerId) {
             const container = document.getElementById(previewContainerId);
+            if (!container) return;
             container.innerHTML = ''; // Clear current
 
             const selectedOptions = Array.from(selectElement.selectedOptions);
@@ -145,16 +213,63 @@
                 badge.style.cssText = 'background-color: #e5e7eb; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; border: 1px solid #d1d5db; color: #374151;';
                 badge.textContent = option.text;
                 container.appendChild(badge);
+
+                // Auto-set Area logic (use last selected or first)
+                const val = String(option.value); const areaId = equipmentAreaMap[val];
+                if (areaId) updateSourceArea(areaId);
             });
         }
 
-        // Initial setup
-        updatePreview(equipSelect, 'equipment-preview-list');
-        updatePreview(periSelect, 'peripheral-preview-list');
+        if (equipSelect) {
+            updatePreview(equipSelect, 'equipment-preview-list');
+            equipSelect.addEventListener('change', () => updatePreview(equipSelect, 'equipment-preview-list'));
+        }
 
-        // Event listeners
-        equipSelect.addEventListener('change', () => updatePreview(equipSelect, 'equipment-preview-list'));
-        periSelect.addEventListener('change', () => updatePreview(periSelect, 'peripheral-preview-list'));
+        // --- Formset Logic ---
+        const addBtn = document.getElementById('add-peripheral-btn');
+        const container = document.getElementById('peripherals-formset');
+        const totalForms = document.getElementById('id_handoverperipheral_set-TOTAL_FORMS');
+
+        const emptyFormTemplateDiv = document.getElementById('empty-form');
+        const emptyFormHtml = emptyFormTemplateDiv.innerHTML;
+
+        addBtn.addEventListener('click', function () {
+            const count = parseInt(totalForms.value);
+            const newFormHtml = emptyFormHtml.replace(/__prefix__/g, count);
+            container.insertAdjacentHTML('beforeend', newFormHtml);
+            totalForms.value = count + 1;
+        });
+
+        // Event delegation for Remove buttons AND Peripheral selection change
+        container.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-row')) {
+                e.target.closest('.peripheral-row').remove();
+                updateFormIndices();
+            }
+        });
+
+        // Listen for changes in peripheral selects within the formset
+        container.addEventListener('change', function (e) {
+            if (e.target.tagName === 'SELECT' && e.target.name.includes('peripheral')) {
+                const peripheralId = String(e.target.value);
+                const areaId = peripheralAreaMap[peripheralId];
+                if (areaId) updateSourceArea(areaId);
+            }
+        });
+
+        function updateFormIndices() {
+            const rows = container.querySelectorAll('.peripheral-row');
+            totalForms.value = rows.length;
+            rows.forEach((row, index) => {
+                row.querySelectorAll('input, select, label').forEach(el => {
+                    const regex = /handoverperipheral_set-(\d+|__prefix__)-/;
+                    const replacement = `handoverperipheral_set-${index}-`;
+                    if (el.id) el.id = el.id.replace(regex, replacement);
+                    if (el.name) el.name = el.name.replace(regex, replacement);
+                    if (el.htmlFor) el.htmlFor = el.htmlFor.replace(regex, replacement);
+                });
+            });
+        }
     });
 </script>
 {% endblock %}

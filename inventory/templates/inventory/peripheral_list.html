@@ -36,7 +36,7 @@
             {% for p in page_obj %}
             <tr>
                 <td>{{ p.serial_number|default:"-" }}</td>
-                <td>{{ p.get_type_display }}</td>
+                <td>{{ p.type.name }}</td>
                 <td>{{ p.brand }} {{ p.model }}</td>
                 <td>
                     <span style="

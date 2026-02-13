@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import Maintenance, Equipment, Area, CostCenter, Peripheral, Handover, Client
+from .models import Maintenance, Equipment, Area, CostCenter, Peripheral, Handover, Client, PeripheralType
 from django.contrib.auth.models import User
 
 class CustomUserCreationForm(UserCreationForm):
@@ -102,6 +102,14 @@ class PeripheralForm(forms.ModelForm):
                 if 'form-select' not in current_classes:
                     self.fields[field].widget.attrs['class'] = (current_classes + ' form-control').strip()
 
+class PeripheralTypeForm(forms.ModelForm):
+    class Meta:
+        model = PeripheralType
+        fields = ['name']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Mouse, Teclado, Monitor'}),
+        }
+
 class ClientForm(forms.ModelForm):
     class Meta:
         model = Client
@@ -121,20 +129,19 @@ class ClientForm(forms.ModelForm):
 class HandoverForm(forms.ModelForm):
     class Meta:
         model = Handover
-        fields = ['client', 'source_area', 'destination_area', 'equipment', 'peripherals', 'receiver_name', 'observations', 'type']
+        fields = ['client', 'source_area', 'destination_area', 'equipment', 'receiver_name', 'observations', 'type']
         widgets = {
             'client': forms.Select(attrs={'class': 'form-select'}),
             'source_area': forms.Select(attrs={'class': 'form-select'}),
             'destination_area': forms.Select(attrs={'class': 'form-select'}),
             'type': forms.Select(attrs={'class': 'form-select'}),
             'equipment': forms.SelectMultiple(attrs={'class': 'form-select', 'style': 'height: 200px;'}),
-            'peripherals': forms.SelectMultiple(attrs={'class': 'form-select', 'style': 'height: 200px;'}),
+            # Peripherals handled by inline formset
             'observations': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'receiver_name': forms.TextInput(attrs={'class': 'form-control'}),
         }
         labels = {
             'equipment': 'Equipos (Mantenga presionado Ctrl para seleccionar varios)',
-            'peripherals': 'Periféricos (Mantenga presionado Ctrl para seleccionar varios)',
         }
 
     def __init__(self, *args, **kwargs):

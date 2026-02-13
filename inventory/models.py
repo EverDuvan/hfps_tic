@@ -102,22 +102,51 @@ class Equipment(models.Model):
         verbose_name = _("Equipo")
         verbose_name_plural = _("Equipos")
 
+class PeripheralType(models.Model):
+    """Model for dynamic Peripheral Types."""
+    name = models.CharField(max_length=50, unique=True, verbose_name=_("Nombre del Tipo"))
+    
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _("Tipo de Periférico")
+        verbose_name_plural = _("Tipos de Periféricos")
+
 class Peripheral(models.Model):
-    """Model representing a Peripheral (Keyboard, Mouse, etc.)."""
-    serial_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Número de Serie")) # Some peripherals don't have serials
-    type = models.CharField(max_length=20, choices=PERIPHERAL_TYPE_CHOICES, verbose_name=_("Tipo"))
+    """Model representing a Peripheral (Keyboard, Mouse, etc.). Acts as a Product/SKU."""
+    serial_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Número de Serie")) 
+    
+    # REMOVED OLD TYPE (Char)
+    # type = models.CharField(max_length=20, choices=PERIPHERAL_TYPE_CHOICES, verbose_name=_("Tipo (Legacy)"), blank=True, null=True)
+    
+    # Final type field - Non-nullable
+    type = models.ForeignKey(PeripheralType, on_delete=models.PROTECT, verbose_name=_("Tipo"))
+    
     brand = models.CharField(max_length=100, verbose_name=_("Marca"))
     model = models.CharField(max_length=100, verbose_name=_("Modelo"))
     status = models.CharField(max_length=20, choices=PERIPHERAL_STATUS_CHOICES, default='ACTIVE', verbose_name=_("Estado"))
+    # Quantity for stock tracking
+    quantity = models.PositiveIntegerField(default=1, verbose_name=_("Cantidad / Stock"))
+    
     connected_to = models.ForeignKey(Equipment, on_delete=models.SET_NULL, null=True, blank=True, related_name='peripherals', verbose_name=_("Conectado a"))
     area = models.ForeignKey(Area, on_delete=models.SET_NULL, null=True, blank=True, related_name='peripherals', verbose_name=_("Área"))
     
     def __str__(self):
-        return f"{self.get_type_display()} - {self.brand} {self.model}"
+        return f"{self.type.name} - {self.brand} {self.model} ({self.quantity})"
 
     class Meta:
         verbose_name = _("Periférico")
         verbose_name_plural = _("Periféricos")
+
+class HandoverPeripheral(models.Model):
+    """Through model for Handover-Peripheral relationship with quantity."""
+    handover = models.ForeignKey('Handover', on_delete=models.CASCADE)
+    peripheral = models.ForeignKey(Peripheral, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1, verbose_name=_("Cantidad Entregada"))
+
+    def __str__(self):
+        return f"{self.quantity} x {self.peripheral}"
 
 class Maintenance(models.Model):
     """Model representing a Maintenance record (Preventive or Corrective)."""
@@ -188,7 +217,8 @@ class Handover(models.Model):
     date = models.DateTimeField(auto_now_add=True, verbose_name=_("Fecha y Hora"))
     type = models.CharField(max_length=20, choices=HANDOVER_TYPE_CHOICES, verbose_name=_("Tipo de Entrega"))
     equipment = models.ManyToManyField(Equipment, blank=True, related_name='handovers', verbose_name=_("Equipos"))
-    peripherals = models.ManyToManyField(Peripheral, blank=True, related_name='handovers', verbose_name=_("Periféricos"))
+    # Updated to use custom through model
+    peripherals = models.ManyToManyField(Peripheral, blank=True, related_name='handovers', verbose_name=_("Periféricos"), through='HandoverPeripheral')
     source_area = models.ForeignKey(Area, on_delete=models.SET_NULL, null=True, blank=True, related_name='handovers_from', verbose_name=_("Área Origen"))
     destination_area = models.ForeignKey(Area, on_delete=models.SET_NULL, null=True, blank=True, related_name='handovers_to', verbose_name=_("Área Destino"))
     technician = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name=_("Técnico Responsable"))

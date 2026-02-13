@@ -24,3 +24,5 @@ six==1.17.0
 sqlparse==0.5.5
 whitenoise==6.11.0
 xlrd==2.0.2
+matplotlib==3.8.2
+matplotlib==3.8.2

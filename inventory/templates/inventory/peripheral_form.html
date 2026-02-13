@@ -18,6 +18,14 @@
                         style="font-size: 0.8rem; color: #3b82f6; text-decoration: none;">➕ Nueva Área</a>
                 </label>
                 {{ field }}
+                {% elif field.name == 'type' %}
+                <label for="{{ field.id_for_label }}"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">
+                    {{ field.label }}
+                    <a href="{% url 'inventory:peripheral_type_create' %}?next={{ request.path }}"
+                        style="font-size: 0.8rem; color: #3b82f6; text-decoration: none;">➕ Nuevo Tipo</a>
+                </label>
+                {{ field }}
                 {% else %}
                 <label for="{{ field.id_for_label }}"
                     style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">

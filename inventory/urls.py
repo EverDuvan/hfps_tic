@@ -41,6 +41,7 @@ urlpatterns = [
     path('inventory/peripherals/<int:pk>/', views.peripheral_detail_view, name='peripheral_detail'),
     path('inventory/peripherals/<int:pk>/edit/', views.peripheral_edit_view, name='peripheral_edit'),
     path('inventory/peripherals/new/', views.peripheral_create_view, name='peripheral_create'),
+    path('inventory/peripherals/types/new/', views.peripheral_type_create_view, name='peripheral_type_create'),
     path('users/', views.user_list_view, name='user_list'),
     path('users/new/', views.user_create_view, name='user_create'),
 ]
