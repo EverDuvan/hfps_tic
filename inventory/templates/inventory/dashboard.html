@@ -40,6 +40,72 @@
 </div>
 {% endif %}
 
+<!-- Expired Warranty Alert -->
+{% if warranty_expired %}
+<div class="card" style="border-left: 4px solid #d97706; margin-bottom: 2rem; background-color: #fffbeb;">
+    <h3 style="color: #92400e; margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+        ⚠️ Garantía Vencida
+    </h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+        <thead>
+            <tr style="text-align: left; border-bottom: 1px solid #fcd34d;">
+                <th style="padding: 0.5rem; color: #92400e;">Equipo</th>
+                <th style="padding: 0.5rem; color: #92400e;">Serie</th>
+                <th style="padding: 0.5rem; color: #92400e;">Vencimiento</th>
+                <th style="padding: 0.5rem;">Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in warranty_expired %}
+            <tr style="border-bottom: 1px solid #fef3c7;">
+                <td style="padding: 0.5rem; color: #b45309;">{{ e.get_type_display }} - {{ e.brand }} {{ e.model }}</td>
+                <td style="padding: 0.5rem; color: #b45309;">{{ e.serial_number }}</td>
+                <td style="padding: 0.5rem; font-weight: bold; color: #d97706;">{{ e.warranty_expiry|date:"d M Y" }}
+                </td>
+                <td style="padding: 0.5rem;">
+                    <a href="{% url 'inventory:equipment_detail' e.pk %}"
+                        style="color: #d97706; text-decoration: underline; font-size: 0.9rem;">Ver</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Expired Lifespan Alert -->
+{% if lifespan_expired %}
+<div class="card" style="border-left: 4px solid #ef4444; margin-bottom: 2rem; background-color: #fef2f2;">
+    <h3 style="color: #b91c1c; margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+        ⚠️ Vida Útil Vencida
+    </h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+        <thead>
+            <tr style="text-align: left; border-bottom: 1px solid #fecaca;">
+                <th style="padding: 0.5rem; color: #991b1b;">Equipo</th>
+                <th style="padding: 0.5rem; color: #991b1b;">Serie</th>
+                <th style="padding: 0.5rem; color: #991b1b;">Fin Vida Útil</th>
+                <th style="padding: 0.5rem;">Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in lifespan_expired %}
+            <tr style="border-bottom: 1px solid #fee2e2;">
+                <td style="padding: 0.5rem; color: #b91c1c;">{{ e.get_type_display }} - {{ e.brand }} {{ e.model }}</td>
+                <td style="padding: 0.5rem; color: #b91c1c;">{{ e.serial_number }}</td>
+                <td style="padding: 0.5rem; font-weight: bold; color: #dc2626;">{{ e.end_of_life_date|date:"d M Y" }}
+                </td>
+                <td style="padding: 0.5rem;">
+                    <a href="{% url 'inventory:equipment_detail' e.pk %}"
+                        style="color: #dc2626; text-decoration: underline; font-size: 0.9rem;">Ver</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
 <!-- KPI Cards -->
 <div
     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">

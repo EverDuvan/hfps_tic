@@ -150,6 +150,16 @@ def dashboard_view(request):
     # Low Stock Alerts
     low_stock_peripherals = Peripheral.objects.filter(quantity__lte=F('min_stock_level'))
 
+    # Expired Alerts
+    today = timezone.now().date()
+    warranty_expired = Equipment.objects.filter(warranty_expiry__lt=today).exclude(status='RETIRED').order_by('warranty_expiry')
+    
+    # Calculate lifespan expired (Python-side filtering for property)
+    lifespan_expired = [
+        eq for eq in Equipment.objects.exclude(purchase_date__isnull=True).exclude(status='RETIRED') 
+        if eq.is_end_of_life_reached
+    ]
+
     context = {
         'total_equipment': total_equipment,
         'active_equipment': active_equipment,
@@ -161,6 +171,8 @@ def dashboard_view(request):
         'type_data': type_data,
         'area_data': area_data,
         'low_stock_peripherals': low_stock_peripherals,
+        'warranty_expired': warranty_expired,
+        'lifespan_expired': lifespan_expired,
     }
     return render(request, 'inventory/dashboard.html', context)
 
@@ -882,6 +894,15 @@ def reports_dashboard_view(request):
     # Low Stock Alerts
     low_stock_peripherals = Peripheral.objects.filter(quantity__lte=F('min_stock_level'))
 
+    # Expired Alerts
+    warranty_expired = equipments.filter(warranty_expiry__lt=today).exclude(status='RETIRED').order_by('warranty_expiry')
+    
+    # Calculate lifespan expired (Python-side filtering for property)
+    lifespan_expired = [
+        eq for eq in equipments.exclude(purchase_date__isnull=True).exclude(status='RETIRED') 
+        if eq.is_end_of_life_reached
+    ]
+
     context = {
         'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': end_date.strftime('%Y-%m-%d'),
@@ -895,6 +916,8 @@ def reports_dashboard_view(request):
         'eq_by_status': eq_by_status,
         'warranty_expiring': warranty_expiring,
         'low_stock_peripherals': low_stock_peripherals,
+        'warranty_expired': warranty_expired,
+        'lifespan_expired': lifespan_expired,
         'handover_by_type': handover_by_type,
         'handover_by_area': handover_by_area,
     }
@@ -952,6 +975,15 @@ def export_report_pdf(request):
     
     # Low Stock Alerts
     low_stock_peripherals = Peripheral.objects.filter(quantity__lte=F('min_stock_level'))
+    
+    # Expired Alerts
+    warranty_expired = equipments.filter(warranty_expiry__lt=today).exclude(status='RETIRED').order_by('warranty_expiry')
+    
+    # Calculate lifespan expired (Python-side filtering for property)
+    lifespan_expired = [
+        eq for eq in equipments.exclude(purchase_date__isnull=True).exclude(status='RETIRED') 
+        if eq.is_end_of_life_reached
+    ]
     
     # Data for Charts
     eq_by_type_data = list(equipments.values('type').annotate(count=Count('type')).order_by('-count'))
@@ -1164,6 +1196,58 @@ def export_report_pdf(request):
             pdf.cell(50, 8, str(w.serial_number), 1)
             pdf.cell(60, 8, f"{w.brand} {w.model}"[:30], 1)
             area_name = w.area.name if w.area else "-"
+            pdf.cell(40, 8, area_name[:20], 1)
+            pdf.ln()
+            
+    # --- Expired Warranty ---
+    if warranty_expired.exists():
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 12)
+        pdf.set_text_color(220, 20, 60) # Crimson
+        pdf.cell(0, 10, '4.1 Garantías Vencidas', 0, 1, 'L', fill=False)
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln(2)
+        
+        pdf.set_font('Arial', 'B', 9)
+        pdf.cell(40, 8, 'Fecha Vence', 1)
+        pdf.cell(50, 8, 'Serial', 1)
+        pdf.cell(60, 8, 'Equipo', 1)
+        pdf.cell(40, 8, 'Área', 1)
+        pdf.ln()
+        
+        pdf.set_font('Arial', '', 9)
+        for w in warranty_expired:
+            pdf.cell(40, 8, w.warranty_expiry.strftime('%Y-%m-%d'), 1)
+            pdf.cell(50, 8, str(w.serial_number), 1)
+            pdf.cell(60, 8, f"{w.brand} {w.model}"[:30], 1)
+            area_name = w.area.name if w.area else "-"
+            pdf.cell(40, 8, area_name[:20], 1)
+            pdf.ln()
+
+    # --- Expired Lifespan ---
+    if lifespan_expired:
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 12)
+        pdf.set_text_color(220, 20, 60) # Crimson
+        pdf.cell(0, 10, '4.2 Vida Útil Vencida', 0, 1, 'L', fill=False)
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln(2)
+        
+        pdf.set_font('Arial', 'B', 9)
+        pdf.cell(40, 8, 'Fin Vida Útil', 1)
+        pdf.cell(50, 8, 'Serial', 1)
+        pdf.cell(60, 8, 'Equipo', 1)
+        pdf.cell(40, 8, 'Área', 1)
+        pdf.ln()
+        
+        pdf.set_font('Arial', '', 9)
+        for e in lifespan_expired:
+            eol_date = e.end_of_life_date
+            eol_str = eol_date.strftime('%Y-%m-%d') if eol_date else "N/A"
+            pdf.cell(40, 8, eol_str, 1)
+            pdf.cell(50, 8, str(e.serial_number), 1)
+            pdf.cell(60, 8, f"{e.brand} {e.model}"[:30], 1)
+            area_name = e.area.name if e.area else "-"
             pdf.cell(40, 8, area_name[:20], 1)
             pdf.ln()
             

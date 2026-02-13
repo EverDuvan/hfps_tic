@@ -179,6 +179,78 @@
     </div>
 </div>
 
+</div>
+
+<!-- Expired Warranty Table -->
+<div class="card" style="margin-top: 2rem; border-left: 4px solid #b91c1c;">
+    <h3 style="color: #b91c1c; display: flex; align-items: center; gap: 0.5rem;">
+        🚫 Garantías Vencidas
+    </h3>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha Vencimiento</th>
+                    <th>Equipo</th>
+                    <th>Serial</th>
+                    <th>Área</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for eq in warranty_expired %}
+                <tr>
+                    <td style="font-weight: bold; color: #b91c1c;">{{ eq.warranty_expiry|date:"d M Y" }}</td>
+                    <td>{{ eq.get_type_display }} - {{ eq.brand }}</td>
+                    <td>{{ eq.serial_number }}</td>
+                    <td>{{ eq.area.name|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #6b7280; padding: 2rem;">
+                        ✅ No hay garantías vencidas.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Expired Lifespan Table -->
+<div class="card" style="margin-top: 2rem; border-left: 4px solid #b91c1c;">
+    <h3 style="color: #b91c1c; display: flex; align-items: center; gap: 0.5rem;">
+        💀 Vida Útil Vencida
+    </h3>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fin Vida Útil</th>
+                    <th>Equipo</th>
+                    <th>Serial</th>
+                    <th>Área</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for eq in lifespan_expired %}
+                <tr>
+                    <td style="font-weight: bold; color: #b91c1c;">{{ eq.end_of_life_date|date:"d M Y" }}</td>
+                    <td>{{ eq.get_type_display }} - {{ eq.brand }}</td>
+                    <td>{{ eq.serial_number }}</td>
+                    <td>{{ eq.area.name|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #6b7280; padding: 2rem;">
+                        ✅ No hay equipos con vida útil vencida.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <script>
     // --- Data Preparation ---
     const typeData = {{ eq_by_type| safe }};
