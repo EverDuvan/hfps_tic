@@ -48,7 +48,7 @@ class EquipmentAdmin(admin.ModelAdmin):
             'fields': ('processor', 'ram', 'storage', 'operating_system', 'os_user', 'voltage', 'amperage', 'screen_size')
         }),
         ('Fechas', {
-            'fields': ('purchase_date', 'warranty_expiry')
+            'fields': ('purchase_date', 'warranty_expiry', 'lifespan_years')
         }),
     )
     actions = [export_as_excel_action]

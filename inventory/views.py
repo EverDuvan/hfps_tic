@@ -870,10 +870,17 @@ def reports_dashboard_view(request):
     # 4.4 Equipment Status
     eq_by_status = list(equipments.values('status').annotate(count=Count('status')))
 
+    # 4.5 Handover Charts
+    handover_by_type = list(handovers.values('type').annotate(count=Count('type')))
+    handover_by_area = list(handovers.values('destination_area__name').annotate(count=Count('destination_area')).order_by('-count')[:5])
+
     # 5. Actionable Lists
     # Warranty Expiring in next 90 days
     limit_date = today + datetime.timedelta(days=90)
     warranty_expiring = equipments.filter(warranty_expiry__range=[today, limit_date]).order_by('warranty_expiry')
+    
+    # Low Stock Alerts
+    low_stock_peripherals = Peripheral.objects.filter(quantity__lte=F('min_stock_level'))
 
     context = {
         'start_date': start_date.strftime('%Y-%m-%d'),
@@ -887,6 +894,9 @@ def reports_dashboard_view(request):
         'top_techs': top_techs,
         'eq_by_status': eq_by_status,
         'warranty_expiring': warranty_expiring,
+        'low_stock_peripherals': low_stock_peripherals,
+        'handover_by_type': handover_by_type,
+        'handover_by_area': handover_by_area,
     }
     return render(request, 'inventory/reports_dashboard.html', context)
 
@@ -896,8 +906,14 @@ def export_report_pdf(request):
     import os
     from fpdf import FPDF
     from django.http import HttpResponse
-    from django.db.models import Count
-    from .charts import generate_equipment_by_type_chart, generate_maintenance_by_type_chart, generate_equipment_status_chart
+    from django.db.models import Count, F
+    from .charts import (
+        generate_equipment_by_type_chart, 
+        generate_maintenance_by_type_chart, 
+        generate_equipment_status_chart,
+        generate_handover_by_type_chart,
+        generate_handover_by_area_chart
+    )
 
     # 1. Date Filtering (Same logic as dashboard)
     today = timezone.now().date()
@@ -934,10 +950,16 @@ def export_report_pdf(request):
     limit_date = today + datetime.timedelta(days=90)
     warranty_expiring = equipments.filter(warranty_expiry__range=[today, limit_date]).order_by('warranty_expiry')
     
+    # Low Stock Alerts
+    low_stock_peripherals = Peripheral.objects.filter(quantity__lte=F('min_stock_level'))
+    
     # Data for Charts
     eq_by_type_data = list(equipments.values('type').annotate(count=Count('type')).order_by('-count'))
     m_by_type_data = list(maintenances.values('maintenance_type').annotate(count=Count('id')))
     eq_by_status_data = list(equipments.values('status').annotate(count=Count('status')))
+    
+    h_by_type_data = list(handovers.values('type').annotate(count=Count('type')))
+    h_by_area_data = list(handovers.values('destination_area__name').annotate(count=Count('destination_area')).order_by('-count')[:5])
 
     # 3. Generate PDF
     class PDF(FPDF):
@@ -1004,6 +1026,42 @@ def export_report_pdf(request):
     pdf.cell(col_width, 10, str(handover_count), 0, 1)
     pdf.ln(5)
     
+    # --- Low Stock Alerts ---
+    if low_stock_peripherals.exists():
+        pdf.set_font('Arial', 'B', 12)
+        pdf.set_text_color(220, 50, 50)
+        pdf.cell(0, 10, '1.1 Alertas de Stock Bajo', 0, 1, 'L', fill=False)
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln(2)
+        
+        pdf.set_font('Arial', 'B', 9)
+        pdf.cell(90, 8, 'Periférico', 1)
+        pdf.cell(25, 8, 'Stock', 1)
+        pdf.cell(25, 8, 'Mínimo', 1)
+        pdf.cell(40, 8, 'Área', 1)
+        pdf.ln()
+        
+        pdf.set_font('Arial', '', 9)
+        for p in low_stock_peripherals:
+            p_name = f"{p.type.name} - {p.brand} {p.model}"
+            pdf.cell(90, 8, p_name[:50], 1)
+            
+            # Highlight if 0
+            if p.quantity == 0:
+                pdf.set_text_color(220, 50, 50)
+                pdf.set_font('Arial', 'B', 9)
+            
+            pdf.cell(25, 8, str(p.quantity), 1)
+            
+            pdf.set_text_color(0, 0, 0)
+            pdf.set_font('Arial', '', 9)
+            
+            pdf.cell(25, 8, str(p.min_stock_level), 1)
+            area_name = p.area.name if p.area else "-"
+            pdf.cell(40, 8, area_name[:20], 1)
+            pdf.ln()
+        pdf.ln(5)
+
     # --- Charts Section ---
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(0, 10, '2. Gráficos Estadísticos', 0, 1, 'L', fill=True)
@@ -1042,6 +1100,19 @@ def export_report_pdf(request):
     if maintenance_count > 0:
         current_y = pdf.get_y()
         add_chart_to_pdf(pdf, generate_maintenance_by_type_chart, m_by_type_data, "Mantenimientos", 50, current_y, 110, 70)
+        pdf.set_y(current_y + 75)
+
+    # Chart 4: Handover Charts
+    if handover_count > 0:
+        current_y = pdf.get_y()
+        if current_y > 200: # Check page break
+             pdf.add_page()
+             current_y = pdf.get_y()
+             
+        # Handover Type (Left)
+        add_chart_to_pdf(pdf, generate_handover_by_type_chart, h_by_type_data, "Entregas por Tipo", 10, current_y, 90, 60)
+        # Handover Area (Right)
+        add_chart_to_pdf(pdf, generate_handover_by_area_chart, h_by_area_data, "Entregas por Área", 110, current_y, 90, 60)
         pdf.set_y(current_y + 75)
     
     pdf.ln(5)

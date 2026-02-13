@@ -62,6 +62,7 @@
                 <th>Tipo</th>
                 <th>Marca / Modelo</th>
                 <th>Área</th>
+                <th>Vida Útil</th>
                 <th>IP (Tipo)</th>
                 <th>Estado</th>
                 <th>Acciones</th>
@@ -80,6 +81,15 @@
                 </td>
                 <td>{{ e.brand }} {{ e.model }}</td>
                 <td>{{ e.area.name|default:"-" }}</td>
+                <td>
+                    {{ e.lifespan_years }} años
+                    {% if e.end_of_life_date and e.is_end_of_life_reached %}
+                    <br>
+                    <span
+                        style="font-size: 0.7rem; background-color: #fee2e2; color: #991b1b; padding: 1px 4px; border-radius: 4px;">Vencida
+                        ({{ e.end_of_life_date|date:"Y" }})</span>
+                    {% endif %}
+                </td>
                 <td>
                     {% if e.ip_address %}
                     {{ e.ip_address }}

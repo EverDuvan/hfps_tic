@@ -31,7 +31,40 @@
                 style="background-color: #9ca3af; margin-left: 0.5rem;">Limpiar</a>
         </div>
     </form>
+    </form>
 </div>
+
+<!-- Alerts Section -->
+{% if low_stock_peripherals %}
+<div class="card" style="border-left: 4px solid #ef4444; margin-bottom: 2rem; background-color: #fef2f2;">
+    <h3 style="color: #b91c1c; margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+        ⚠️ Alerta de Stock Bajo
+    </h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+        <thead>
+            <tr style="text-align: left; border-bottom: 1px solid #fecaca;">
+                <th style="padding: 0.5rem; color: #991b1b;">Periférico</th>
+                <th style="padding: 0.5rem; color: #991b1b;">Stock Actual</th>
+                <th style="padding: 0.5rem; color: #991b1b;">Mínimo</th>
+                <th style="padding: 0.5rem;">Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in low_stock_peripherals %}
+            <tr style="border-bottom: 1px solid #fee2e2;">
+                <td style="padding: 0.5rem; color: #b91c1c;">{{ p.type.name }} - {{ p.brand }} {{ p.model }}</td>
+                <td style="padding: 0.5rem; font-weight: bold; color: #dc2626;">{{ p.quantity }}</td>
+                <td style="padding: 0.5rem; color: #b91c1c;">{{ p.min_stock_level }}</td>
+                <td style="padding: 0.5rem;">
+                    <a href="{% url 'inventory:peripheral_edit' p.pk %}"
+                        style="color: #dc2626; text-decoration: underline; font-size: 0.9rem;">Gestionar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
 
 <!-- KPI Row -->
 <div
@@ -87,6 +120,23 @@
     </div>
 </div>
 
+<!-- Charts Row 3 -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+    <div class="card">
+        <h3>Entregas por Tipo</h3>
+        <div style="height: 300px; position: relative;">
+            <canvas id="handTypeChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <h3>Entregas por Área Destino</h3>
+        <div style="height: 300px; position: relative;">
+            <canvas id="handAreaChart"></canvas>
+        </div>
+    </div>
+</div>
+
 <!-- Warranty Alert Table -->
 <div class="card">
     <h3 style="color: #ef4444; display: flex; align-items: center; gap: 0.5rem;">
@@ -135,6 +185,8 @@
     const maintData = {{ m_by_type| safe }};
     const techData = {{ top_techs| safe }};
     const statusData = {{ eq_by_status| safe }};
+    const handTypeData = {{ handover_by_type| safe }};
+    const handAreaData = {{ handover_by_area| safe }};
 
     // --- Chart 1: Equipment Types ---
     new Chart(document.getElementById('typeChart'), {
@@ -206,6 +258,43 @@
             responsive: true,
             maintainAspectRatio: false,
             scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // --- Chart 5: Handover Type ---
+    new Chart(document.getElementById('handTypeChart'), {
+        type: 'pie',
+        data: {
+            labels: handTypeData.map(d => d.type === 'ASSIGNMENT' ? 'Asignación' : (d.type === 'RETURN' ? 'Devolución' : d.type)),
+            datasets: [{
+                data: handTypeData.map(d => d.count),
+                backgroundColor: ['#8e44ad', '#d35400', '#2980b9'],
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+        }
+    });
+
+    // --- Chart 6: Handover Area ---
+    new Chart(document.getElementById('handAreaChart'), {
+        type: 'bar',
+        data: {
+            labels: handAreaData.map(d => d.destination_area__name || 'N/A'),
+            datasets: [{
+                label: 'Entregas',
+                data: handAreaData.map(d => d.count),
+                backgroundColor: '#d35400',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { beginAtZero: true } },
             plugins: { legend: { display: false } }
         }
     });

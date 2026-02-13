@@ -70,3 +70,47 @@ def generate_equipment_status_chart(data):
     plt.tight_layout()
     
     return get_chart_buffer()
+
+def generate_handover_by_type_chart(data):
+    """
+    Generates a bar chart for handovers by type.
+    data: list of dicts [{'type': 'ASSIGNMENT', 'count': 5}, ...]
+    """
+    if not data:
+        return None
+    
+    # Import locally to avoid circular imports if necessary, or rely on existing imports
+    from .choices import HANDOVER_TYPE_CHOICES
+    
+    types = [dict(HANDOVER_TYPE_CHOICES).get(item['type'], item['type']) for item in data]
+    counts = [item['count'] for item in data]
+    
+    plt.figure(figsize=(6, 4))
+    bars = plt.bar(types, counts, color='#8e44ad')
+    
+    plt.title('Entregas por Tipo')
+    plt.xlabel('Tipo')
+    plt.ylabel('Cantidad')
+    plt.tight_layout()
+    
+    return get_chart_buffer()
+
+def generate_handover_by_area_chart(data):
+    """
+    Generates a horizontal bar chart for handovers by destination area.
+    data: list of dicts [{'destination_area__name': 'HR', 'count': 5}, ...]
+    """
+    if not data:
+        return None
+        
+    areas = [item['destination_area__name'] or 'N/A' for item in data]
+    counts = [item['count'] for item in data]
+    
+    plt.figure(figsize=(6, 4))
+    bars = plt.barh(areas, counts, color='#d35400')
+    
+    plt.title('Entregas por Área Destino')
+    plt.xlabel('Cantidad')
+    plt.tight_layout()
+    
+    return get_chart_buffer()

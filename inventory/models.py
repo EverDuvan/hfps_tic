@@ -75,6 +75,23 @@ class Equipment(models.Model):
     area = models.ForeignKey(Area, on_delete=models.SET_NULL, null=True, blank=True, related_name='equipments', verbose_name=_("Área"))
     purchase_date = models.DateField(blank=True, null=True, verbose_name=_("Fecha de Compra"))
     warranty_expiry = models.DateField(blank=True, null=True, verbose_name=_("Vencimiento de Garantía"))
+    lifespan_years = models.PositiveIntegerField(default=5, verbose_name=_("Vida Útil (Años)"))
+
+    @property
+    def end_of_life_date(self):
+        if self.purchase_date:
+            try:
+                return self.purchase_date.replace(year=self.purchase_date.year + self.lifespan_years)
+            except ValueError: # Handle Feb 29
+                return self.purchase_date.replace(year=self.purchase_date.year + self.lifespan_years, day=28)
+        return None
+
+    @property
+    def is_end_of_life_reached(self):
+        eol = self.end_of_life_date
+        if eol:
+            return eol <= timezone.now().date()
+        return False
     
     # New IP Fields
     ip_address = models.GenericIPAddressField(blank=True, null=True, verbose_name=_("Dirección IP"))

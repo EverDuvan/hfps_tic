@@ -69,6 +69,7 @@ class EquipmentForm(forms.ModelForm):
         widgets = {
             'purchase_date': forms.DateInput(attrs={'type': 'date'}),
             'warranty_expiry': forms.DateInput(attrs={'type': 'date'}),
+            'lifespan_years': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
         }
     
     def __init__(self, *args, **kwargs):
