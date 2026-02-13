@@ -83,11 +83,22 @@
                 <td>{{ e.area.name|default:"-" }}</td>
                 <td>
                     {{ e.lifespan_years }} años
-                    {% if e.end_of_life_date and e.is_end_of_life_reached %}
+                    {% if e.end_of_life_date %}
+                    <br>
+                    <span style="font-size: 0.75rem; color: #6b7280;">Vence: {{ e.end_of_life_date|date:"d/m/Y"
+                        }}</span>
+                    {% if e.is_end_of_life_reached %}
                     <br>
                     <span
-                        style="font-size: 0.7rem; background-color: #fee2e2; color: #991b1b; padding: 1px 4px; border-radius: 4px;">Vencida
-                        ({{ e.end_of_life_date|date:"Y" }})</span>
+                        style="font-size: 0.7rem; background-color: #fee2e2; color: #991b1b; padding: 1px 4px; border-radius: 4px;">Vencida</span>
+                    {% else %}
+                    <br>
+                    <span
+                        style="font-size: 0.7rem; background-color: #dcfce7; color: #166534; padding: 1px 4px; border-radius: 4px;">Vigente</span>
+                    {% endif %}
+                    {% else %}
+                    <br>
+                    <span style="font-size: 0.75rem; color: #9ca3af;">(Sin fecha compra)</span>
                     {% endif %}
                 </td>
                 <td>
