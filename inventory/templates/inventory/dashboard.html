@@ -7,6 +7,39 @@
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+
+<!-- Alerts Section -->
+{% if low_stock_peripherals %}
+<div class="card" style="border-left: 4px solid #ef4444; margin-bottom: 2rem; background-color: #fef2f2;">
+    <h3 style="color: #b91c1c; margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+        ⚠️ Alerta de Stock Bajo
+    </h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+        <thead>
+            <tr style="text-align: left; border-bottom: 1px solid #fecaca;">
+                <th style="padding: 0.5rem; color: #991b1b;">Periférico</th>
+                <th style="padding: 0.5rem; color: #991b1b;">Stock Actual</th>
+                <th style="padding: 0.5rem; color: #991b1b;">Mínimo</th>
+                <th style="padding: 0.5rem;">Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in low_stock_peripherals %}
+            <tr style="border-bottom: 1px solid #fee2e2;">
+                <td style="padding: 0.5rem; color: #b91c1c;">{{ p.type.name }} - {{ p.brand }} {{ p.model }}</td>
+                <td style="padding: 0.5rem; font-weight: bold; color: #dc2626;">{{ p.quantity }}</td>
+                <td style="padding: 0.5rem; color: #b91c1c;">{{ p.min_stock_level }}</td>
+                <td style="padding: 0.5rem;">
+                    <a href="{% url 'inventory:peripheral_edit' p.pk %}"
+                        style="color: #dc2626; text-decoration: underline; font-size: 0.9rem;">Gestionar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
 <!-- KPI Cards -->
 <div
     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">

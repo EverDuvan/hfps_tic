@@ -7,7 +7,7 @@ from .utils import generate_maintenance_pdf, generate_handover_pdf, export_to_ex
 from django.apps import apps
 from .forms import MaintenanceForm, EquipmentForm, AreaForm, CostCenterForm, CustomUserCreationForm, PeripheralForm, HandoverForm, ClientForm, PeripheralTypeForm
 from django.contrib.auth.models import User
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -147,6 +147,9 @@ def dashboard_view(request):
 
     area_data = list(Equipment.objects.exclude(area__isnull=True).values('area__name').annotate(count=Count('id')).order_by('-count')[:5])
 
+    # Low Stock Alerts
+    low_stock_peripherals = Peripheral.objects.filter(quantity__lte=F('min_stock_level'))
+
     context = {
         'total_equipment': total_equipment,
         'active_equipment': active_equipment,
@@ -157,6 +160,7 @@ def dashboard_view(request):
         'status_data': status_data,
         'type_data': type_data,
         'area_data': area_data,
+        'low_stock_peripherals': low_stock_peripherals,
     }
     return render(request, 'inventory/dashboard.html', context)
 

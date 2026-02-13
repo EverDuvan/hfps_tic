@@ -86,6 +86,7 @@ class PeripheralForm(forms.ModelForm):
         widgets = {
             'type': forms.Select(attrs={'class': 'form-select'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
+            'min_stock_level': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'connected_to': forms.Select(attrs={'class': 'form-select'}), # Searchable via JS ideally, but select for now
             'area': forms.Select(attrs={'class': 'form-select'}),
         }

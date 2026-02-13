@@ -26,6 +26,7 @@
                 <th>Serial</th>
                 <th>Tipo</th>
                 <th>Marca / Modelo</th>
+                <th>Cant.</th>
                 <th>Estado</th>
                 <th>Conectado a</th>
                 <th>Área</th>
@@ -38,6 +39,7 @@
                 <td>{{ p.serial_number|default:"-" }}</td>
                 <td>{{ p.type.name }}</td>
                 <td>{{ p.brand }} {{ p.model }}</td>
+                <td>{{ p.quantity }}</td>
                 <td>
                     <span style="
                         padding: 0.25rem 0.5rem; 

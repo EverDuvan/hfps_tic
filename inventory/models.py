@@ -128,6 +128,7 @@ class Peripheral(models.Model):
     status = models.CharField(max_length=20, choices=PERIPHERAL_STATUS_CHOICES, default='ACTIVE', verbose_name=_("Estado"))
     # Quantity for stock tracking
     quantity = models.PositiveIntegerField(default=1, verbose_name=_("Cantidad / Stock"))
+    min_stock_level = models.PositiveIntegerField(default=0, verbose_name=_("Stock Mínimo (Alerta)"))
     
     connected_to = models.ForeignKey(Equipment, on_delete=models.SET_NULL, null=True, blank=True, related_name='peripherals', verbose_name=_("Conectado a"))
     area = models.ForeignKey(Area, on_delete=models.SET_NULL, null=True, blank=True, related_name='peripherals', verbose_name=_("Área"))
@@ -228,12 +229,7 @@ class Handover(models.Model):
     acta_pdf = models.FileField(upload_to='handover_actas/', blank=True, null=True, verbose_name=_("Acta de Entrega PDF"))
 
     def save(self, *args, **kwargs):
-        should_generate_pdf = not self.acta_pdf
         super().save(*args, **kwargs)
-        if should_generate_pdf:
-            pdf_content = generate_handover_pdf(self)
-            self.acta_pdf.save(f'acta_entrega_{self.id}.pdf', ContentFile(pdf_content), save=False)
-            super().save(update_fields=['acta_pdf'])
 
     def __str__(self):
         return f"{self.get_type_display()} - {self.date.strftime('%Y-%m-%d %H:%M')}"
