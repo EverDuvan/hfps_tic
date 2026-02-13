@@ -1242,15 +1242,11 @@ def export_report_pdf(request):
             pdf.ln()
 
     # Output
-    response = HttpResponse(content_type='application/pdf')
+    # FPDF2 returns bytearray by default. Convert to bytes for safety.
+    pdf_content = bytes(pdf.output())
+    
+    response = HttpResponse(pdf_content, content_type='application/pdf')
     # Change attachment to inline for preview
     response['Content-Disposition'] = f'inline; filename="reporte_inventario_{start_date}_{end_date}.pdf"'
-    
-    # FPDF 1.7.2 in Python 3 returns a string for dest='S'. 
-    # Must encode to latin-1 to get the correct binary bytes for the response.
-    # Otherwise Django/Python utf-8 encoding corrupts the PDF structure, resulting in a blank or invalid file.
-    # Use dest='S' to ensure string return, then encode.
-    pdf_content = pdf.output(dest='S').encode('latin-1')
-    response.write(pdf_content)
     
     return response

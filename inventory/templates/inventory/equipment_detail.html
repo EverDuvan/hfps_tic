@@ -39,8 +39,8 @@
                 Dirección IP</h3>
             <p style="font-size: 1.125rem; margin: 0;">
                 {% if equipment.ip_address %}
-                {{ equipment.ip_address }} <span style="font-size: 0.875rem; color: #6b7280;">({{
-                    equipment.get_ip_type_display }})</span>
+                {{ equipment.ip_address }} <span
+                    style="font-size: 0.875rem; color: #6b7280;">({{equipment.get_ip_type_display }})</span>
                 {% else %}
                 -
                 {% endif %}
@@ -90,8 +90,7 @@
             <div>
                 <span style="display: block; font-size: 0.75rem; color: #6b7280;">Tipo de Propiedad</span>
                 <span
-                    style="font-weight: 500; {% if equipment.ownership_type == 'RENTED' %}color: #d97706;{% endif %}">{{
-                    equipment.get_ownership_type_display }}</span>
+                    style="font-weight: 500; {% if equipment.ownership_type == 'RENTED' %}color: #d97706;{% endif %}">{{ equipment.get_ownership_type_display }}</span>
             </div>
             {% if equipment.ownership_type == 'RENTED' %}
             <div>

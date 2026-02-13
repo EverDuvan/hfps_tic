@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import io
 from .choices import EQUIPMENT_TYPE_CHOICES, MAINTENANCE_TYPE_CHOICES, EQUIPMENT_STATUS_CHOICES

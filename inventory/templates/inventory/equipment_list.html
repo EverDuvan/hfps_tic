@@ -85,8 +85,7 @@
                     {{ e.lifespan_years }} años
                     {% if e.end_of_life_date %}
                     <br>
-                    <span style="font-size: 0.75rem; color: #6b7280;">Vence: {{ e.end_of_life_date|date:"d/m/Y"
-                        }}</span>
+                    <span style="font-size: 0.75rem; color: #6b7280;">Vence: {{ e.end_of_life_date|date:"d/m/Y" }}</span>
                     {% if e.is_end_of_life_reached %}
                     <br>
                     <span
