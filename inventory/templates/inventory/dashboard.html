@@ -8,6 +8,90 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
+
+
+<!-- KPI Cards -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="card" style="border-left: 4px solid var(--primary);">
+        <h3>Total Equipos</h3>
+        <p style="font-size: 2.5rem; font-weight: 800; color: #1f2937;">{{ total_equipment }}</p>
+    </div>
+    <div class="card" style="border-left: 4px solid #4ade80;">
+        <h3>Equipos Activos</h3>
+        <p style="font-size: 2.5rem; font-weight: 800; color: #16a34a;">{{ active_equipment }}</p>
+    </div>
+    <div class="card" style="border-left: 4px solid #facc15;">
+        <h3>Mantenimientos (Histórico)</h3>
+        <p style="font-size: 2.5rem; font-weight: 800; color: #ca8a04;">{{ maintenance_count }}</p>
+    </div>
+    <div class="card" style="border-left: 4px solid #a855f7;">
+        <h3>Total Entregas</h3>
+        <p style="font-size: 2.5rem; font-weight: 800; color: #7e22ce;">{{ handover_count }}</p>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="grid-2" style="margin-bottom: 2rem;">
+    <div class="card">
+        <h3>Estado de Equipos</h3>
+        <div style="height: 300px; display: flex; justify-content: center;">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <h3>Distribución por Tipo</h3>
+        <div style="height: 300px;">
+            <canvas id="typeChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Row: Areas & Recents -->
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+    <!-- Top Areas Table/Chart -->
+    <div class="card">
+        <h3>Top Áreas con Equipos</h3>
+        <canvas id="areaChart"></canvas>
+    </div>
+
+    <!-- Recent Activity Tabs/List -->
+    <div class="card">
+        <h3>Actividad Reciente</h3>
+
+        <div style="margin-top: 1rem;">
+            <h4 style="color: #6b7280; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 0.5rem;">
+                Mantenimientos</h4>
+            <table style="margin-bottom: 1.5rem;">
+                <tbody>
+                    {% for m in recent_maintenance %}
+                    <tr>
+                        <td style="padding: 0.5rem;"><strong>{{ m.date|date:"d M" }}</strong></td>
+                        <td style="padding: 0.5rem;">{{ m.equipment.brand }} {{ m.equipment.model }}</td>
+                        <td style="padding: 0.5rem; color: #6b7280;">{{ m.performed_by.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h4 style="color: #6b7280; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 0.5rem;">Entregas
+            </h4>
+            <table>
+                <tbody>
+                    {% for h in recent_handovers %}
+                    <tr>
+                        <td style="padding: 0.5rem;"><strong>{{ h.date|date:"d M" }}</strong></td>
+                        <td style="padding: 0.5rem;">{{ h.get_type_display }}</td>
+                        <td style="padding: 0.5rem; color: #6b7280;">{{ h.destination_area.name|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
 <!-- Alerts Section -->
 {% if low_stock_peripherals %}
 <div class="card" style="border-left: 4px solid #ef4444; margin-bottom: 2rem; background-color: #fef2f2;">
@@ -105,87 +189,6 @@
     </table>
 </div>
 {% endif %}
-
-<!-- KPI Cards -->
-<div
-    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-    <div class="card" style="border-left: 4px solid var(--primary);">
-        <h3>Total Equipos</h3>
-        <p style="font-size: 2.5rem; font-weight: 800; color: #1f2937;">{{ total_equipment }}</p>
-    </div>
-    <div class="card" style="border-left: 4px solid #4ade80;">
-        <h3>Equipos Activos</h3>
-        <p style="font-size: 2.5rem; font-weight: 800; color: #16a34a;">{{ active_equipment }}</p>
-    </div>
-    <div class="card" style="border-left: 4px solid #facc15;">
-        <h3>Mantenimientos (Histórico)</h3>
-        <p style="font-size: 2.5rem; font-weight: 800; color: #ca8a04;">{{ maintenance_count }}</p>
-    </div>
-    <div class="card" style="border-left: 4px solid #a855f7;">
-        <h3>Total Entregas</h3>
-        <p style="font-size: 2.5rem; font-weight: 800; color: #7e22ce;">{{ handover_count }}</p>
-    </div>
-</div>
-
-<!-- Charts Row -->
-<div class="grid-2" style="margin-bottom: 2rem;">
-    <div class="card">
-        <h3>Estado de Equipos</h3>
-        <div style="height: 300px; display: flex; justify-content: center;">
-            <canvas id="statusChart"></canvas>
-        </div>
-    </div>
-    <div class="card">
-        <h3>Distribución por Tipo</h3>
-        <div style="height: 300px;">
-            <canvas id="typeChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Bottom Row: Areas & Recents -->
-<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
-    <!-- Top Areas Table/Chart -->
-    <div class="card">
-        <h3>Top Áreas con Equipos</h3>
-        <canvas id="areaChart"></canvas>
-    </div>
-
-    <!-- Recent Activity Tabs/List -->
-    <div class="card">
-        <h3>Actividad Reciente</h3>
-
-        <div style="margin-top: 1rem;">
-            <h4 style="color: #6b7280; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 0.5rem;">
-                Mantenimientos</h4>
-            <table style="margin-bottom: 1.5rem;">
-                <tbody>
-                    {% for m in recent_maintenance %}
-                    <tr>
-                        <td style="padding: 0.5rem;"><strong>{{ m.date|date:"d M" }}</strong></td>
-                        <td style="padding: 0.5rem;">{{ m.equipment.brand }} {{ m.equipment.model }}</td>
-                        <td style="padding: 0.5rem; color: #6b7280;">{{ m.performed_by.username }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-            <h4 style="color: #6b7280; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 0.5rem;">Entregas
-            </h4>
-            <table>
-                <tbody>
-                    {% for h in recent_handovers %}
-                    <tr>
-                        <td style="padding: 0.5rem;"><strong>{{ h.date|date:"d M" }}</strong></td>
-                        <td style="padding: 0.5rem;">{{ h.get_type_display }}</td>
-                        <td style="padding: 0.5rem; color: #6b7280;">{{ h.destination_area.name|default:"-" }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
 
 <script>
     // Data from Django

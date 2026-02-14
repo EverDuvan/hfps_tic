@@ -1327,7 +1327,9 @@ def export_report_pdf(request):
 
     # Output
     # FPDF2 returns bytearray by default. Convert to bytes for safety.
-    pdf_content = bytes(pdf.output())
+    # FPDF output returns a latin-1 string in Python 3 by default if no dest given, or dest='S'
+    # We need bytes for the response
+    pdf_content = pdf.output(dest='S').encode('latin-1')
     
     response = HttpResponse(pdf_content, content_type='application/pdf')
     # Change attachment to inline for preview
