@@ -115,3 +115,21 @@ Este proyecto es propiedad de Ever Duvan Hernandez y está destinado para uso in
 ubuntu aws
 
 ssh -i hfps_aws.pem ubuntu@34.207.116.83
+
+
+
+Usage aws
+
+bash: 
+
+cd hfps_tic
+git pull
+docker-compose down
+docker-compose up -d --build
+docker-compose exec web python manage.py migrate
+
+To update data (Caution: Overwrites server data):
+
+bash
+scp -i hfps_aws.pem db.sqlite3 ubuntu@34.207.116.83:/home/ubuntu/hfps_tic/db.sqlite3
+ssh -i hfps_aws.pem ubuntu@34.207.116.83 "cd hfps_tic && docker-compose restart"
