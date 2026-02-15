@@ -237,7 +237,11 @@ def generate_maintenance_pdf(m):
     pdf.set_x(110)
     pdf.cell(80, 5, "SOPORTE TECNICO - TIC", align='C', ln=1)
 
-    return pdf.output(dest='S').encode('latin-1')
+    # Output
+    pdf_content = pdf.output(dest='S')
+    if isinstance(pdf_content, str):
+        return pdf_content.encode('latin-1')
+    return bytes(pdf_content)
 
 
 def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
@@ -378,4 +382,8 @@ def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
     pdf.set_font("Arial", '', 8)
     pdf.cell(70, 5, clean_text(receiver_label or "_________"), align='C', ln=1)
 
-    return pdf.output(dest='S').encode('latin-1')
+    # Output
+    pdf_content = pdf.output(dest='S')
+    if isinstance(pdf_content, str):
+        return pdf_content.encode('latin-1')
+    return bytes(pdf_content)
