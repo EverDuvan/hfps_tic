@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, FileResponse, Http404
 from django.utils import timezone
+from datetime import timedelta
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter, MaintenanceSchedule, HandoverPeripheral
 from .utils import generate_maintenance_pdf, generate_handover_pdf, export_to_excel
@@ -160,6 +161,32 @@ def dashboard_view(request):
         if eq.is_end_of_life_reached
     ]
 
+    # Upcoming Maintenance Alerts (30 days)
+    upcoming_limit = today + timezone.timedelta(days=30)
+    
+    # 1. From Schedule (Pending)
+    upcoming_schedules = MaintenanceSchedule.objects.filter(
+        status='PENDING',
+        scheduled_date__lte=upcoming_limit
+    ).select_related('equipment').order_by('scheduled_date')
+
+    # 2. From Maintenance Records (Next Date)
+    # We might want to filter out if there's already a schedule for it, but for now show both if distinct
+    upcoming_maintenance_records = Maintenance.objects.filter(
+        next_maintenance_date__lte=upcoming_limit,
+        next_maintenance_date__gte=today # Optional: exclude past if we assume they are done? verification needed.
+        # Actually, if it's past and not done, it is overdue. Let's include past too.
+    ).exclude(next_maintenance_date__isnull=True).select_related('equipment').order_by('next_maintenance_date')
+    
+    # Refined logic for Maintenance records: 
+    # If a maintenance was done RECENTLY, the next_date is future. 
+    # If it was done long ago, next_date might be past. 
+    # We should show them.
+    upcoming_maintenance_records = Maintenance.objects.filter(
+        next_maintenance_date__lte=upcoming_limit
+    ).exclude(next_maintenance_date__isnull=True).select_related('equipment').order_by('next_maintenance_date')
+
+
     context = {
         'total_equipment': total_equipment,
         'active_equipment': active_equipment,
@@ -173,6 +200,8 @@ def dashboard_view(request):
         'low_stock_peripherals': low_stock_peripherals,
         'warranty_expired': warranty_expired,
         'lifespan_expired': lifespan_expired,
+        'upcoming_schedules': upcoming_schedules,
+        'upcoming_maintenance_records': upcoming_maintenance_records,
     }
     return render(request, 'inventory/dashboard.html', context)
 
