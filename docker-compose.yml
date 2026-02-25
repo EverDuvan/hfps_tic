@@ -1,11 +1,28 @@
 services:
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=hfps_tic_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+
   web:
     build: .
     command: gunicorn --bind 0.0.0.0:8000 hfps_tic.wsgi:application
     volumes:
       - .:/app
-      - ./db.sqlite3:/app/db.sqlite3  # Mount SQLite DB
     ports:
       - "8000:8000"
+    depends_on:
+      - db
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/hfps_tic_db
+
+volumes:
+  postgres_data:
