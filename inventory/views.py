@@ -1368,3 +1368,12 @@ def export_report_pdf(request):
     response['Content-Disposition'] = f'inline; filename="reporte_inventario_{start_date}_{end_date}.pdf"'
     
     return response
+
+def support_view(request):
+    return render(request, 'inventory/support.html')
+
+def manual_view(request):
+    return render(request, 'inventory/manual.html')
+
+def privacy_policy_view(request):
+    return render(request, 'inventory/privacy.html')

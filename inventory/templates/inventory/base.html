@@ -131,13 +131,13 @@
 
         <footer class="app-footer">
             <div>
-                &copy; {{ now|date:"Y" }} <strong>HFPS TIC</strong>. Todos los derechos reservados. <span
-                    style="margin-left: 0.5rem; opacity: 0.7;">v1.2.0</span>
+                &copy; {{ now|date:"Y" }} Desarrollado por <strong>Ever Duvan</strong>. Todos los derechos reservados.
+                <span style="margin-left: 0.5rem; opacity: 0.7;">v1.2.0</span>
             </div>
             <div class="footer-links">
-                <a href="#">Soporte Help Desk</a>
-                <a href="#">Manual de Usuario</a>
-                <a href="#">Políticas de Privacidad</a>
+                <a href="{% url 'inventory:support_help_desk' %}">Soporte Help Desk</a>
+                <a href="{% url 'inventory:user_manual' %}">Manual de Usuario</a>
+                <a href="{% url 'inventory:privacy_policy' %}">Políticas de Privacidad</a>
             </div>
         </footer>
     </main>

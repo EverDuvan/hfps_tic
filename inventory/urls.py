@@ -44,4 +44,9 @@ urlpatterns = [
     path('inventory/peripherals/types/new/', views.peripheral_type_create_view, name='peripheral_type_create'),
     path('users/', views.user_list_view, name='user_list'),
     path('users/new/', views.user_create_view, name='user_create'),
+
+    # Footer informational pages
+    path('support/', views.support_view, name='support_help_desk'),
+    path('manual/', views.manual_view, name='user_manual'),
+    path('privacy/', views.privacy_policy_view, name='privacy_policy'),
 ]

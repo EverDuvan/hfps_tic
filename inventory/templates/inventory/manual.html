@@ -1,0 +1,161 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Manual de Usuario - HFPS TIC{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>Manual de Usuario Completo</h1>
+    <a href="javascript:history.back()" class="btn"
+        style="border: 1px solid var(--border-color); color: var(--text-main);">
+        Volver atrás
+    </a>
+</div>
+
+<div class="card" style="max-width: 900px; margin: 0 auto; color: #334155; line-height: 1.7;">
+    <h2
+        style="border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; margin-bottom: 1.5rem; color: #0f172a; font-size: 1.5rem;">
+        Introducción a HFPS TIC
+    </h2>
+    <p style="margin-bottom: 1.5rem;">
+        <strong>HFPS TIC</strong> es la plataforma integral diseñada exclusivamente para el control de inventario
+        tecnológico, flujos de asignación y gestión de mantenimientos del hospital. Este manual detalla cada módulo paso
+        a paso para maximizar tu productividad.
+    </p>
+
+    <!-- Módulo 1: Dashboard y Reportes -->
+    <div
+        style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 2rem;">
+        <h3
+            style="color: #1d4ed8; margin-bottom: 1rem; border-bottom: 1px solid #bfdbfe; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>📊</span> 1. Dashboard y Control de Mando
+        </h3>
+        <p style="margin-bottom: 1rem;">
+            Al iniciar sesión, la primera pantalla es el <strong>Dashboard</strong>. Este panel actúa como el centro de
+            control principal, mostrando de un vistazo la salud de toda la infraestructura de TI.
+        </p>
+        <ul style="list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem;">
+            <li><strong>Métricas Clave:</strong> Tarjetas superiores con totales rápidos (Total de Equipos, Equipos
+                Activos, Mantenimientos del Mes).</li>
+            <li><strong>Alertas Críticas:</strong> Cuadros de aviso en rojo que te notificarán automáticamente si hay
+                <em>Garantías por vencer</em> (en los próximos 90 días) o si algún periférico ha caído por debajo de su
+                <em>Stock Mínimo</em>.</li>
+            <li><strong>Gráficos:</strong> Gráficos circulares interactivos segmentando el hardware por estado (Activo,
+                Inactivo, En Reparación) o por tipo (PC, Portátil, Impresora).</li>
+        </ul>
+        <div style="background: #dbeafe; padding: 0.75rem 1rem; border-left: 4px solid #3b82f6; font-size: 0.9rem;">
+            <em>💡 Tip: Haz clic en la pestaña "Reportes" del menú lateral para generar cortes de fecha personalizados y
+                descargar informes consolidados en formato PDF listos para imprimir.</em>
+        </div>
+    </div>
+
+    <!-- Módulo 2: Inventario -->
+    <div
+        style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 2rem;">
+        <h3
+            style="color: #047857; margin-bottom: 1rem; border-bottom: 1px solid #a7f3d0; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>📦</span> 2. Gestión del Inventario (Equipos y Periféricos)
+        </h3>
+        <p style="margin-bottom: 1rem;">
+            La base de la aplicación se divide en dos categorías fuertes: <strong>Equipos Principales</strong>
+            (computadoras, servidores) y <strong>Periféricos</strong> (mouse, teclado, cargadores).
+        </p>
+
+        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #065f46;">A. Crear y Editar Equipos</h4>
+        <p style="margin-bottom: 1rem;">
+            Navega a la opción "📦 Inventario" y luego al botón "+ Nuevo Equipo".
+        </p>
+        <ul style="list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 1.5rem;">
+            <li>Ingresa los datos del fabricante (Marca, Modelo, Serial). El número de Serie es obligatorio y único.
+            </li>
+            <li>Selecciona el <strong style="color: #065f46;">Área</strong> de ubicación física (ej. Urgencias,
+                Recepción).</li>
+            <li>Asocia los aspectos financieros como la <strong style="color: #065f46;">Orden de Compra</strong>,
+                <strong style="color: #065f46;">Fecha de Compra</strong> y el <strong style="color: #065f46;">Centro de
+                    Costos</strong>. Estos campos son vitales para calcular legalmente la Vida Útil de depreciación del
+                equipo.</li>
+            <li>Al guardar, el sistema generará de forma automática una etiqueta <strong>Código QR</strong> descargable,
+                lista para imprimir y pegar directamente en la carcasa física del equipo.</li>
+        </ul>
+
+        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #065f46;">B. Manejo de Periféricos</h4>
+        <p style="margin-bottom: 0.5rem;">
+            A diferencia de un computador, los periféricos se manejan usualmente por volumen. En "🖱️ Periféricos", en
+            lugar de crear una fila por cada mouse, se especifica la cantidad total en stock y el <strong>Stock Mínimo
+                Seguro</strong>. Cuando registres una entrega (acta), el sistema restará automáticamente de este número
+            total.
+        </p>
+    </div>
+
+    <!-- Módulo 3: Actas y Entregas -->
+    <div
+        style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 2rem;">
+        <h3
+            style="color: #b45309; margin-bottom: 1rem; border-bottom: 1px solid #fde68a; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>📝</span> 3. Entregas y Actas Oficiales
+        </h3>
+        <p style="margin-bottom: 1rem;">
+            Toda movilización de hardware requiere trazabilidad. El módulo "Entregas" procesa los traslados y el
+            "papeleo" virtual.
+        </p>
+        <ol style="margin-left: 1.5rem; margin-bottom: 1rem;">
+            <li>Clic en <strong>"Nueva Entrega"</strong>.</li>
+            <li>Seleccionar el Tipo de Movimiento: <em>Préstamo, Asignación Permanente o Devolución</em>.</li>
+            <li>Indicar desde qué <strong style="color: #b45309;">Área Origen</strong> se mueve y a qué <strong
+                    style="color: #b45309;">Área Destino</strong> llega.</li>
+            <li>Seleccionar el catálogo de Computadores/Equipos implicados <em>(se pueden seleccionar varios al mismo
+                    tiempo sosteniendo la tecla CTRL)</em>.</li>
+            <li>Agregar dinámicamente cuántos accesorios o periféricos acompañan la entrega (ej. "2 teclados, 1 cable de
+                poder").</li>
+        </ol>
+        <div style="background: #fef3c7; padding: 0.75rem 1rem; border-left: 4px solid #f59e0b; font-size: 0.9rem;">
+            <strong>Mágia del Sistema:</strong> Antes de guardar, puedes oprimir <strong>"Vista Previa Acta
+                PDF"</strong>. El sistema procesará todos los datos inyectados, cruzará las credenciales del técnico que
+            hace la entrega, y generará un documento formal corporativo con espacios para firma del receptor. Una vez
+            guardado oficialmente, se reduce automáticamente el stock de los periféricos entregados.
+        </div>
+    </div>
+
+    <!-- Módulo 4: Mantenimiento -->
+    <div
+        style="background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 2rem;">
+        <h3
+            style="color: #7e22ce; margin-bottom: 1rem; border-bottom: 1px solid #e9d5ff; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🛠️</span> 4. Mantenimientos y Cronograma
+        </h3>
+        <p style="margin-bottom: 1rem;">
+            Garantiza la operatividad técnica documentando todas las intervenciones sobre el parque tecnológico.
+        </p>
+        <ul style="list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1.5rem;">
+            <li><strong>Registro de Intervención:</strong> Al registrar un mantenimiento, especifica si fue <em
+                    style="color: #7e22ce;">Preventivo</em> (planeado), <em style="color: #7e22ce;">Correctivo</em>
+                (falla rota) o <em style="color: #7e22ce;">Actualización</em>. Relata el diagnóstico, acciones tomadas e
+                indica explícitamente qué técnico del sistema lo ejecutó. Toda intervención queda ligada permanentemente
+                a la "Hoja de Vida" de la PC.</li>
+            <li><strong>Cronograma Anual:</strong> Accede a "📅 Cronograma". Podrás elegir un año de planeación; la
+                matriz cargará los 12 meses visuales cruzados con los equipos por área. Simplemente haz clic en una
+                casilla de mes para cambiar el estado a <span
+                    style="background: #fef08a; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">Pendiente</span>
+                de mantenimiento, o retirarlo. </li>
+        </ul>
+    </div>
+
+    <!-- Módulo 5: Configuración y Usuarios -->
+    <div
+        style="background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1rem;">
+        <h3
+            style="color: #be185d; margin-bottom: 1rem; border-bottom: 1px solid #fbcfe8; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>⚙️</span> 5. Gestión de Áreas, Costos y Usuarios
+        </h3>
+        <p style="margin-bottom: 1rem;">
+            Los módulos de infraestructura organizan la logística. Es indispensable crear las <strong>"Áreas"</strong>
+            (pisos, servicios médicos) y los <strong>"Centros de Costo"</strong> financieros antes de registrar el
+            primer computador, ya que dependen de ellos.
+        </p>
+        <p style="margin-bottom: 0.5rem;">
+            Solo el personal administrador ("Super Admin" o "Staff") tendrá visible el menú lateral de <strong>👥
+                Usuarios</strong>. Allí se abren y revocan los accesos al portal HFPS TIC.
+        </p>
+    </div>
+
+</div>
+{% endblock %}

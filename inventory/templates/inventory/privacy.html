@@ -1,0 +1,44 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Política de Privacidad{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>Políticas de Uso y Privacidad</h1>
+    <a href="javascript:history.back()" class="btn"
+        style="border: 1px solid var(--border-color); color: var(--text-main);">
+        Volver atrás
+    </a>
+</div>
+
+<div class="card" style="max-width: 800px; margin: 0 auto; color: #475569; line-height: 1.6;">
+    <h3
+        style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem; color: #1e293b;">
+        Términos y Privacidad en HFPS TIC
+    </h3>
+
+    <p style="margin-bottom: 1rem;">
+        Al utilizar esta herramienta, el usuario asume el compromiso de manejar adecuadamente la información técnica del
+        hospital de forma responsable.
+    </p>
+
+    <h4 style="margin-top: 2rem; margin-bottom: 0.5rem; color: #3b82f6;">1. Recopilación de la Información</h4>
+    <p style="margin-bottom: 1rem;">
+        La plataforma HFPS TIC desarrollada por <strong>Ever Duvan</strong> recopila y resguarda datos relacionados con
+        el inventario tecnológico de la institución: series de dispositivos, mantenimientos aplicados y responsables de
+        la custodia.
+    </p>
+
+    <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #3b82f6;">2. Autorización de Acceso</h4>
+    <p style="margin-bottom: 1rem;">
+        El acceso es exclusivo para el personal informático del hospital con credenciales vigentes. Queda prohibida la
+        compartición de contraseñas.
+    </p>
+
+    <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #3b82f6;">3. Trazabilidad Técnica</h4>
+    <p style="margin-bottom: 1rem;">
+        Las operaciones de edición, entrega (actas) y bajas de equipos quedan registradas históricamente para fines de
+        auditoría del área de Sistemas.
+    </p>
+</div>
+{% endblock %}

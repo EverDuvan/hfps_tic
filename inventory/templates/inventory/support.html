@@ -1,0 +1,32 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Soporte Técnico{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>Soporte Técnico</h1>
+    <a href="javascript:history.back()" class="btn"
+        style="border: 1px solid var(--border-color); color: var(--text-main);">
+        Volver atrás
+    </a>
+</div>
+
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <h3 style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        ¿Necesitas Ayuda?
+    </h3>
+    <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+        Si tienes inconvenientes con el acceso, el uso de alguna funcionalidad o experimentas errores inesperados dentro
+        de HFPS TIC, por favor contáctanos.
+    </p>
+
+    <div style="background-color: #f8fafc; padding: 1.5rem; border-radius: 0.5rem; margin-top: 2rem;">
+        <h4 style="margin-bottom: 0.5rem; font-weight: 600; color: #1e293b;">Mesa de Ayuda TI</h4>
+        <ul style="list-style-type: none; padding: 0; color: #475569; line-height: 2;">
+            <li><strong style="color: #334155;">Desarrollador:</strong> Ever Duvan</li>
+            <li><strong style="color: #334155;">Teléfono / Extensión:</strong> (Ext. 0000)</li>
+            <li><strong style="color: #334155;">Horario de atención:</strong> Lunes a Viernes, 8:00 AM - 5:00 PM</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
