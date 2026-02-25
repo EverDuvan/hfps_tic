@@ -54,8 +54,8 @@
                 class="{% if request.resolver_match.url_name == 'cost_center_list' or request.resolver_match.url_name == 'cost_center_edit' %}active{% endif %}">
                 💰 Centros de Costos
             </a>
-            {% if user.is_staff %}
-            <a href="{% url 'inventory:user_list' %}" class="{% if 'users' in request.path %}active{% endif %}">
+            {% if user.is_staff or user.is_superuser %}
+            <a href="{% url 'users:user_list' %}" class="{% if 'users/manage' in request.path %}active{% endif %}">
                 👥 Usuarios
             </a>
             {% endif %}
@@ -91,9 +91,16 @@
                             <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">{{ user.email }}</p>
                         </div>
 
+                        <!-- Profile Link -->
+                        <a href="{% url 'users:profile' %}"
+                            style="width: 100%; text-align: left; background: none; border: none; padding: 0.75rem 1rem; cursor: pointer; color: #374151; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                            👤 Mi Perfil
+                        </a>
+
                         <!-- Actions -->
                         <!-- Switch User (Logout then redirect to login) -->
-                        <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                        <form action="{% url 'logout' %}" method="post"
+                            style="margin: 0; border-top: 1px solid #f3f4f6;">
                             {% csrf_token %}
                             <input type="hidden" name="next" value="{% url 'login' %}">
                             <button type="submit"

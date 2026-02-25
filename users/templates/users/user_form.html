@@ -1,0 +1,89 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}
+{% if form.instance.pk %}
+Editar Usuario
+{% else %}
+Crear Usuario
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>
+        {% if form.instance.pk %}
+        Editar Usuario: {{ form.instance.username }}
+        {% else %}
+        Crear Nuevo Usuario
+        {% endif %}
+    </h1>
+    <a href="{% url 'users:user_list' %}" class="btn"
+        style="border: 1px solid var(--border-color); color: var(--text-main);">
+        Volver atrás
+    </a>
+</div>
+
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <h3 style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        Información del Usuario
+    </h3>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-error">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div class="grid-2">
+            {% for field in form %}
+            <div
+                style="margin-bottom: 1.5rem; {% if field.field.widget.input_type == 'checkbox' %}grid-column: 1 / -1;{% endif %}">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                <label for="{{ field.id_for_label }}" style="display: flex; align-items: center; cursor: pointer;">
+                    {{ field }}
+                    <span style="margin-left: 0.5rem; font-weight: bold;">{{ field.label }}</span>
+                </label>
+                {% if field.help_text %}
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; padding-left: 1.5rem;">
+                    {{ field.help_text|safe }}
+                </p>
+                {% endif %}
+                {% else %}
+                <label for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                    {% if field.field.required %}
+                    <span style="color: #ef4444;">*</span>
+                    {% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    {{ field.help_text|safe }}
+                </p>
+                {% endif %}
+                {% endif %}
+
+                {% if field.errors %}
+                <p style="font-size: 0.85rem; color: #ef4444; margin-top: 0.5rem; font-weight: 500;">
+                    {{ field.errors.0 }}
+                </p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div
+            style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+            <a href="{% url 'users:user_list' %}" class="btn" style="background: #e5e7eb; color: #374151;">
+                Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary">
+                Guardar Usuario
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

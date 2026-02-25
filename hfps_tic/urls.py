@@ -30,6 +30,7 @@ router.register(r'areas', views_api.AreaViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('users/', include('users.urls')),
     path('', include('inventory.urls')),
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls')),
