@@ -1377,3 +1377,46 @@ def manual_view(request):
 
 def privacy_policy_view(request):
     return render(request, 'inventory/privacy.html')
+
+@login_required
+def equipment_round_list_view(request):
+    from .models import EquipmentRound # local import to avoid circular dependency
+    date_start = request.GET.get('date_start', '')
+    date_end = request.GET.get('date_end', '')
+    equipment_query = request.GET.get('q', '')
+
+    rounds = EquipmentRound.objects.all().order_by('-datetime')
+    
+    if date_start:
+        rounds = rounds.filter(datetime__date__gte=date_start)
+    if date_end:
+        rounds = rounds.filter(datetime__date__lte=date_end)
+    if equipment_query:
+        rounds = rounds.filter(
+            Q(equipment__serial_number__icontains=equipment_query) | 
+            Q(equipment__brand__icontains=equipment_query) | 
+            Q(equipment__model__icontains=equipment_query)
+        )
+
+    context = {
+        'rounds': rounds,
+        'current_start': date_start,
+        'current_end': date_end,
+        'search_query': equipment_query,
+    }
+    return render(request, 'inventory/equipment_round_list.html', context)
+
+@login_required
+def equipment_round_create_view(request):
+    from .forms import EquipmentRoundForm # local import to avoid circular dependencies
+    if request.method == 'POST':
+        form = EquipmentRoundForm(request.POST)
+        if form.is_valid():
+            round_obj = form.save(commit=False)
+            round_obj.performed_by = request.user
+            round_obj.save()
+            return redirect('inventory:equipment_round_list')
+    else:
+        form = EquipmentRoundForm()
+    
+    return render(request, 'inventory/equipment_round_form.html', {'form': form, 'title': 'Nueva Ronda de Equipos'})

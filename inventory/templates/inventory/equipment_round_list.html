@@ -1,0 +1,99 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Inventario de Rondas{% endblock %}
+{% block page_title %}Rondas de Equipos{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Historial de Rondas</h2>
+        <a href="{% url 'inventory:equipment_round_create' %}" class="btn btn-primary">
+            + Nueva Ronda
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb; background: #f9fafb;">
+        <form method="get" class="grid"
+            style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+            <div class="form-group">
+                <label class="form-label" for="q">Buscar Equipo (Serial/Ref)</label>
+                <input type="text" name="q" id="q" class="form-control" value="{{ search_query }}"
+                    placeholder="Buscar...">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="date_start">Fecha Inicio</label>
+                <input type="date" name="date_start" id="date_start" class="form-control" value="{{ current_start }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="date_end">Fecha Fin</label>
+                <input type="date" name="date_end" id="date_end" class="form-control" value="{{ current_end }}">
+            </div>
+            <div class="form-group" style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Filtrar</button>
+                <a href="{% url 'inventory:equipment_round_list' %}" class="btn btn-secondary">Limpiar</a>
+            </div>
+        </form>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Fecha y Hora</th>
+                    <th>Equipo</th>
+                    <th>Estado Gral.</th>
+                    <th>Realizada por</th>
+                    <th>Físico</th>
+                    <th>Encendido</th>
+                    <th>Red</th>
+                    <th>S.O.</th>
+                    <th>Limpieza</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for round in rounds %}
+                <tr>
+                    <td style="white-space: nowrap;">{{ round.datetime|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <div style="font-weight: 500;">{{ round.equipment.serial_number }}</div>
+                        <div style="font-size: 0.85rem; color: #6b7280;">{{ round.equipment.brand }} {{
+                            round.equipment.model }}</div>
+                    </td>
+                    <td>
+                        <span class="status-badge 
+                            {% if round.general_status == 'GOOD' %}status-active
+                            {% elif round.general_status == 'REGULAR' %}status-maintenance
+                            {% else %}status-retired{% endif %}">
+                            {{ round.get_general_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ round.performed_by.username|default:"N/A" }}</td>
+                    <td style="font-size: 0.9rem;">
+                        {{ round.get_hw_status_display }}
+                    </td>
+                    <td style="font-size: 0.9rem;">
+                        {{ round.get_powers_on_display }}
+                    </td>
+                    <td style="font-size: 0.9rem;">
+                        {{ round.get_network_status_display }}
+                    </td>
+                    <td style="font-size: 0.9rem;">
+                        {{ round.get_os_status_display }}
+                    </td>
+                    <td style="font-size: 0.9rem;">
+                        {{ round.get_cleanliness_status_display }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: #6b7280;">
+                        No hay rondas registradas que coincidan con la búsqueda.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

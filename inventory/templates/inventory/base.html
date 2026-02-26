@@ -38,6 +38,10 @@
                 class="{% if request.resolver_match.url_name == 'maintenance_schedule' %}active{% endif %}">
                 📅 Cronograma
             </a>
+            <a href="{% url 'inventory:equipment_round_list' %}"
+                class="{% if request.resolver_match.url_name == 'equipment_round_list' or request.resolver_match.url_name == 'equipment_round_create' %}active{% endif %}">
+                🔄 Rondas
+            </a>
             <a href="{% url 'inventory:reports_dashboard' %}"
                 class="{% if request.resolver_match.url_name == 'reports_dashboard' %}active{% endif %}">
                 📊 Reportes
@@ -131,7 +135,8 @@
 
         <footer class="app-footer">
             <div>
-                &copy; {{ now|date:"Y" }} Desarrollado por <strong>Ever Duvan</strong>. Todos los derechos reservados.
+                &copy; {{ now|date:"Y" }} Desarrollado por <strong>Ever Duvan</strong>. <br> Todos los derechos
+                reservados.
                 <span style="margin-left: 0.5rem; opacity: 0.7;">v1.2.0</span>
             </div>
             <div class="footer-links">

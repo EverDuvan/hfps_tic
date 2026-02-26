@@ -275,4 +275,51 @@ class MaintenanceSchedule(models.Model):
     def __str__(self):
         return f"{self.equipment} - {self.scheduled_date}"
 
+class EquipmentRound(models.Model):
+    """Model representing an Equipment Round (Ronda de Equipos) check."""
+    
+    STATUS_CHOICES = [
+        ('GOOD', 'Bueno'),
+        ('REGULAR', 'Regular'),
+        ('BAD', 'Malo'),
+    ]
+
+    CHECK_CHOICES = [
+        ('PASS', '✅ Bien'),
+        ('WARN', '⚠️ Regular'),
+        ('FAIL', '❌ Malo'),
+        ('NA', '➖ No Aplica'),
+    ]
+
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='rounds', verbose_name=_("Equipo"))
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name=_("Realizada por"))
+    datetime = models.DateTimeField(default=timezone.now, verbose_name=_("Fecha y Hora"))
+    
+    # Checklist fields (Professional)
+    hw_status = models.CharField(max_length=10, choices=CHECK_CHOICES, default='PASS', verbose_name=_("Estado Físico / Chasis"))
+    powers_on = models.CharField(max_length=10, choices=CHECK_CHOICES, default='PASS', verbose_name=_("Encendido / Energía"))
+    monitor_status = models.CharField(max_length=10, choices=CHECK_CHOICES, default='PASS', verbose_name=_("Pantalla / Monitor"))
+    peripherals_status = models.CharField(max_length=10, choices=CHECK_CHOICES, default='PASS', verbose_name=_("Teclado y Mouse"))
+    network_status = models.CharField(max_length=10, choices=CHECK_CHOICES, default='PASS', verbose_name=_("Conectividad / Red"))
+    os_status = models.CharField(max_length=10, choices=CHECK_CHOICES, default='PASS', verbose_name=_("Sistema Operativo / Software"))
+    
+    # New additions
+    cables_status = models.CharField(max_length=10, choices=CHECK_CHOICES, default='PASS', verbose_name=_("Organización de Cables"))
+    cleanliness_status = models.CharField(max_length=10, choices=CHECK_CHOICES, default='PASS', verbose_name=_("Limpieza del Puesto"))
+    ups_status = models.CharField(max_length=10, choices=CHECK_CHOICES, default='NA', verbose_name=_("Estado de UPS / Regulador"))
+    printer_status = models.CharField(max_length=10, choices=CHECK_CHOICES, default='NA', verbose_name=_("Impresora / Escáner"))
+    
+    general_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='GOOD', verbose_name=_("Estado General"))
+    observations = models.TextField(blank=True, null=True, verbose_name=_("Observaciones"))
+    
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"Ronda {self.equipment} - {self.datetime.strftime('%Y-%m-%d %H:%M')}"
+
+    class Meta:
+        verbose_name = _("Ronda de Equipo")
+        verbose_name_plural = _("Rondas de Equipos")
+        ordering = ['-datetime']
+
 

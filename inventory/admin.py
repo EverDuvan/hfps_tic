@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
-from .models import Area, Equipment, Peripheral, Maintenance, Handover, CostCenter, Client, Technician, PeripheralType, HandoverPeripheral
+from .models import Area, Equipment, Peripheral, Maintenance, Handover, CostCenter, Client, Technician, PeripheralType, HandoverPeripheral, EquipmentRound
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from .utils import export_to_excel
@@ -130,3 +130,27 @@ class HandoverAdmin(admin.ModelAdmin):
         url = reverse('handover_acta', args=[obj.pk])
         return format_html('<a class="button" href="{}" target="_blank">Generar Acta</a>', url)
     acta_link.short_description = "Acta"
+
+@admin.register(EquipmentRound)
+class EquipmentRoundAdmin(admin.ModelAdmin):
+    list_display = ('equipment', 'datetime', 'performed_by', 'general_status', 'powers_on', 'network_status')
+    list_filter = ('general_status', 'datetime', 'powers_on', 'monitor_status', 'peripherals_status', 'network_status', 'os_status')
+    search_fields = ('equipment__serial_number', 'performed_by__username', 'performed_by__first_name', 'performed_by__last_name', 'observations')
+    date_hierarchy = 'datetime'
+    actions = [export_as_excel_action]
+    
+    fieldsets = (
+        ('Información General', {
+            'fields': ('equipment', 'performed_by', 'datetime')
+        }),
+        ('Lista de Chequeo', {
+            'fields': (
+                ('powers_on', 'monitor_status'),
+                ('peripherals_status', 'network_status'),
+                'os_status'
+            )
+        }),
+        ('Resultado', {
+            'fields': ('general_status', 'observations')
+        }),
+    )

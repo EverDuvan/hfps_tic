@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import Maintenance, Equipment, Area, CostCenter, Peripheral, Handover, Client, PeripheralType
+from .models import Maintenance, Equipment, Area, CostCenter, Peripheral, Handover, Client, PeripheralType, EquipmentRound
 from django.contrib.auth.models import User
 
 class CustomUserCreationForm(UserCreationForm):
@@ -160,3 +160,27 @@ class ExcelImportForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['excel_file'].widget.attrs.update({'class': 'form-control'})
 
+class EquipmentRoundForm(forms.ModelForm):
+    class Meta:
+        model = EquipmentRound
+        fields = [
+            'equipment', 'hw_status', 'powers_on', 'monitor_status', 
+            'peripherals_status', 'network_status', 'os_status', 
+            'cables_status', 'cleanliness_status', 'ups_status', 
+            'printer_status', 'general_status', 'observations'
+        ]
+        widgets = {
+            'equipment': forms.Select(attrs={'class': 'form-select'}),
+            'hw_status': forms.Select(attrs={'class': 'form-select'}),
+            'powers_on': forms.Select(attrs={'class': 'form-select'}),
+            'monitor_status': forms.Select(attrs={'class': 'form-select'}),
+            'peripherals_status': forms.Select(attrs={'class': 'form-select'}),
+            'network_status': forms.Select(attrs={'class': 'form-select'}),
+            'os_status': forms.Select(attrs={'class': 'form-select'}),
+            'cables_status': forms.Select(attrs={'class': 'form-select'}),
+            'cleanliness_status': forms.Select(attrs={'class': 'form-select'}),
+            'ups_status': forms.Select(attrs={'class': 'form-select'}),
+            'printer_status': forms.Select(attrs={'class': 'form-select'}),
+            'general_status': forms.Select(attrs={'class': 'form-select'}),
+            'observations': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }

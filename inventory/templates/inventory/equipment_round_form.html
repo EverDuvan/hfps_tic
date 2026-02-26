@@ -1,0 +1,140 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .form-control,
+    .form-select {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        box-sizing: border-box;
+    }
+</style>
+
+<div class="card"
+    style="max-width: 800px; margin: 2rem auto; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 2rem; border-radius: 12px; background: white;">
+    <h2
+        style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.5rem; font-weight: 600; color: #111827; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.75rem;">
+        Detalles de la Ronda</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div
+            style="background-color: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: #4b5563;">1. Equipo a Revisar</h3>
+
+        <div style="margin-bottom: 2rem;">
+            <div class="form-group">
+                {{ form.equipment }}
+                {% if form.equipment.errors %}
+                <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">{{ form.equipment.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: #4b5563;">2. Lista de Chequeo</h3>
+
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem; background: #f9fafb; padding: 1.5rem; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <!-- Físico -->
+            <div class="form-group">
+                <label for="{{ form.hw_status.id_for_label }}">Estado Físico / Chasis</label>
+                {{ form.hw_status }}
+            </div>
+            <!-- Poder / Encendido -->
+            <div class="form-group">
+                <label for="{{ form.powers_on.id_for_label }}">Encendido / Energía</label>
+                {{ form.powers_on }}
+            </div>
+            <!-- Monitor -->
+            <div class="form-group">
+                <label for="{{ form.monitor_status.id_for_label }}">Pantalla / Monitor</label>
+                {{ form.monitor_status }}
+            </div>
+            <!-- Periféricos -->
+            <div class="form-group">
+                <label for="{{ form.peripherals_status.id_for_label }}">Teclado y Mouse</label>
+                {{ form.peripherals_status }}
+            </div>
+            <!-- Red -->
+            <div class="form-group">
+                <label for="{{ form.network_status.id_for_label }}">Conectividad / Red</label>
+                {{ form.network_status }}
+            </div>
+            <!-- SO -->
+            <div class="form-group">
+                <label for="{{ form.os_status.id_for_label }}">Sistema Operativo</label>
+                {{ form.os_status }}
+            </div>
+            <!-- Cables -->
+            <div class="form-group">
+                <label for="{{ form.cables_status.id_for_label }}">Organización de Cables</label>
+                {{ form.cables_status }}
+            </div>
+            <!-- Limpieza -->
+            <div class="form-group">
+                <label for="{{ form.cleanliness_status.id_for_label }}">Limpieza del Puesto</label>
+                {{ form.cleanliness_status }}
+            </div>
+            <!-- UPS -->
+            <div class="form-group">
+                <label for="{{ form.ups_status.id_for_label }}">UPS / Regulador</label>
+                {{ form.ups_status }}
+            </div>
+            <!-- Impresora -->
+            <div class="form-group">
+                <label for="{{ form.printer_status.id_for_label }}">Impresora / Escáner</label>
+                {{ form.printer_status }}
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: #4b5563;">3. Resultado Final</h3>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+            <div class="form-group">
+                <label for="{{ form.general_status.id_for_label }}">Estado General</label>
+                {{ form.general_status }}
+                {% if form.general_status.errors %}
+                <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">{{ form.general_status.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.observations.id_for_label }}">Observaciones adicionales</label>
+                {{ form.observations }}
+                {% if form.observations.errors %}
+                <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">{{ form.observations.errors }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div
+            style="margin-top: 2.5rem; display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid #e5e7eb; padding-top: 1.5rem;">
+            <a href="{% url 'inventory:equipment_round_list' %}" class="btn"
+                style="background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-weight: 500;">Cancelar</a>
+            <button type="submit" class="btn btn-primary"
+                style="background-color: #2563eb; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 6px; font-weight: 500; cursor: pointer; transition: background-color 0.2s;">Guardar
+                Ronda</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
