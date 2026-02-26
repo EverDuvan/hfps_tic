@@ -37,14 +37,40 @@
                 {% endif %}
             </div>
 
+            <!-- New Stock Integration Fields -->
+            <div
+                style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; margin-bottom: 2rem;">
+                <h5 style="margin-top: 0; color: #334155; font-size: 0.95rem; margin-bottom: 1rem;"><i
+                        class="fas fa-boxes"></i> Asignación desde Stock de Periféricos</h5>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="{{ form.peripheral.id_for_label }}" class="form-label">Seleccionar Pieza del
+                        Inventario</label>
+                    {{ form.peripheral }}
+                    {% if form.peripheral.errors %}
+                    <span style="color: #ef4444; font-size: 0.85rem;">{{ form.peripheral.errors|join:", " }}</span>
+                    {% endif %}
+                    <small style="color: #64748b; display: block; margin-top: 5px;">Si la acción es "Agregado" o
+                        "Reemplazado", la cantidad se descontará del inventario global al guardar.</small>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="{{ form.quantity.id_for_label }}" class="form-label">Cantidad a Usar</label>
+                    {{ form.quantity }}
+                    {% if form.quantity.errors %}
+                    <span style="color: #ef4444; font-size: 0.85rem;">{{ form.quantity.errors|join:", " }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
             <div class="form-group">
-                <label for="{{ form.component_name.id_for_label }}" class="form-label">Pieza / Componente</label>
+                <label for="{{ form.component_name.id_for_label }}" class="form-label">Descripción Manual</label>
                 {{ form.component_name }}
                 {% if form.component_name.errors %}
                 <span style="color: #ef4444; font-size: 0.85rem;">{{ form.component_name.errors|join:", " }}</span>
                 {% endif %}
-                <small style="color: #6b7280; display: block; margin-top: 5px;">Ej: RAM 8GB DDR4, Disco Estado Sólido
-                    512GB NVMe, etc.</small>
+                <small style="color: #6b7280; display: block; margin-top: 5px;">Opcional si eligió Pieza arriba. Ej:
+                    Limpieza Interna, Cambio Pasta Térmica, etc.</small>
             </div>
 
             <div class="form-group">

@@ -59,6 +59,16 @@ class Technician(User):
         verbose_name = _("Ingeniero / Técnico")
         verbose_name_plural = _("Ingenieros / Técnicos")
 
+class OwnershipType(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name=_("Nombre del Tipo de Propiedad"))
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _("Tipo de Propiedad")
+        verbose_name_plural = _("Tipos de Propiedad")
+
 class Equipment(models.Model):
     """Model representing an IT Equipment item."""
     serial_number = models.CharField(max_length=100, unique=True, verbose_name=_("Número de Serie"))
@@ -102,7 +112,9 @@ class Equipment(models.Model):
     amperage = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Amperaje (A)"))
 
     # Ownership & Rental Info
-    ownership_type = models.CharField(max_length=20, choices=OWNERSHIP_CHOICES, default='OWNED', verbose_name=_("Propiedad"))
+    ownership_type = models.CharField(max_length=20, choices=OWNERSHIP_CHOICES, default='OWNED', verbose_name=_("Propiedad (Legacy)"))
+    ownership = models.ForeignKey(OwnershipType, on_delete=models.SET_NULL, null=True, blank=True, related_name='equipments', verbose_name=_("Tipo de Propiedad"))
+
     provider_name = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Proveedor / Empresa"))
     rental_contract_ref = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Ref. Contrato / Ticket"))
     support_phone = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Teléfono Soporte"))
@@ -326,7 +338,12 @@ class ComponentLog(models.Model):
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='component_logs', verbose_name=_("Equipo"))
     date = models.DateTimeField(default=timezone.now, verbose_name=_("Fecha y Hora"))
     action_type = models.CharField(max_length=20, choices=COMPONENT_ACTION_CHOICES, verbose_name=_("Tipo de Acción"))
-    component_name = models.CharField(max_length=100, verbose_name=_("Pieza / Componente (Ej: RAM, Disco Duro)"))
+    
+    # New integration fields
+    peripheral = models.ForeignKey(Peripheral, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Pieza del Inventario (Opcional)"))
+    quantity = models.PositiveIntegerField(default=1, verbose_name=_("Cantidad (Stock a Deducir)"))
+    
+    component_name = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Descripción de Pieza (Libre)"))
     description = models.TextField(verbose_name=_("Descripción de los Cambios"))
     performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name=_("Realizado por"))
     history = HistoricalRecords()

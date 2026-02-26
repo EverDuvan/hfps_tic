@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
-from .models import Area, Equipment, Peripheral, Maintenance, Handover, CostCenter, Client, Technician, PeripheralType, HandoverPeripheral, EquipmentRound
+from .models import Area, Equipment, Peripheral, Maintenance, Handover, CostCenter, Client, Technician, PeripheralType, HandoverPeripheral, EquipmentRound, OwnershipType
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from .utils import export_to_excel
@@ -9,6 +9,11 @@ from .utils import export_to_excel
 def export_as_excel_action(modeladmin, request, queryset):
     return export_to_excel(queryset, modeladmin, request)
 export_as_excel_action.short_description = "Exportar a Excel"
+
+@admin.register(OwnershipType)
+class OwnershipTypeAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
 
 @admin.register(Area)
 class AreaAdmin(admin.ModelAdmin):

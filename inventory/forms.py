@@ -65,7 +65,7 @@ class EquipmentForm(forms.ModelForm):
     class Meta:
         model = Equipment
         fields = '__all__'
-        exclude = ['created_at', 'updated_at']
+        exclude = ['created_at', 'updated_at', 'ownership_type']
         widgets = {
             'purchase_date': forms.DateInput(attrs={'type': 'date'}),
             'warranty_expiry': forms.DateInput(attrs={'type': 'date'}),
@@ -196,11 +196,21 @@ class ComponentLogForm(forms.ModelForm):
         }
 
 class ComponentLogForm(forms.ModelForm):
+    # Field specifically for selecting a peripheral from stock
+    peripheral = forms.ModelChoiceField(
+        queryset=Peripheral.objects.filter(quantity__gt=0),
+        required=False,
+        empty_label="--- No aplica (Ingreso manual) ---",
+        label="Pieza de Inventario (Opcional)",
+        widget=forms.Select(attrs={'class': 'form-select select2'})
+    )
+
     class Meta:
         model = ComponentLog
-        fields = ['action_type', 'component_name', 'description']
+        fields = ['action_type', 'peripheral', 'quantity', 'component_name', 'description']
         widgets = {
             'action_type': forms.Select(attrs={'class': 'form-select'}),
-            'component_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Memoria RAM DDR4, Disco SSD...'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Detalles del cambio...'})
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'component_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Descripción manual si no se eligió Pieza de Inventario...'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Detalles del cambio (ej: Se retiró módulo dañado y se puso uno nuevo).'})
         }
