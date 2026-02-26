@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import Maintenance, Equipment, Area, CostCenter, Peripheral, Handover, Client, PeripheralType, EquipmentRound, ComponentLog
+from .models import Maintenance, Equipment, Area, CostCenter, Peripheral, Handover, Client, PeripheralType, EquipmentRound, ComponentLog, RetirementLog
 from django.contrib.auth.models import User
 
 class CustomUserCreationForm(UserCreationForm):
@@ -213,4 +213,13 @@ class ComponentLogForm(forms.ModelForm):
             'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'component_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Descripción manual si no se eligió Pieza de Inventario...'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Detalles del cambio (ej: Se retiró módulo dañado y se puso uno nuevo).'})
+        }
+
+class RetirementForm(forms.ModelForm):
+    class Meta:
+        model = RetirementLog
+        fields = ['reason', 'photo']
+        widgets = {
+            'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Ej. Pantalla estrellada, corto circuito interno, obsoleto...'}),
+            'photo': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         }

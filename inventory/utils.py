@@ -387,3 +387,147 @@ def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
     if isinstance(pdf_content, str):
         return pdf_content.encode('latin-1')
     return bytes(pdf_content)
+
+def generate_equipment_history_pdf(equipment, events):
+    from django.utils import timezone
+    pdf = PDF(orientation='P', unit='mm', format='A4')
+    pdf.add_page()
+    
+    draw_header(pdf, "HOJA DE VIDA Y BITACORA HISTORICA\nEQUIPOS DE COMPUTO", "FR-GT-HV V.01", timezone.now().date())
+
+    # ... 1. DATOS DEL EQUIPO ...
+    draw_section_title(pdf, "1. IDENTIFICACION PRINCIPAL")
+    
+    draw_field(pdf, "Tipo de Equipo:", clean_text(equipment.get_type_display()), 30, 40)
+    draw_field(pdf, "Marca:", clean_text(equipment.brand), 20, 40)
+    draw_field(pdf, "Modelo:", clean_text(equipment.model), 20, 40, ln=1)
+    
+    draw_field(pdf, "No. Serie / ID:", clean_text(equipment.serial_number), 30, 40)
+    draw_field(pdf, "Estado Actual:", clean_text(equipment.get_status_display()), 20, 40)
+    
+    area_name = equipment.area.name if equipment.area else "Sin asignar"
+    draw_field(pdf, "Ubicacion:", clean_text(area_name), 20, 40, ln=1)
+
+    pdf.ln(2)
+
+    # ... 2. ESPECIFICACIONES TECNICAS ...
+    draw_section_title(pdf, "2. ESPECIFICACIONES TECNICAS")
+    
+    draw_field(pdf, "Sis. Operativo:", clean_text(equipment.operating_system or "-"), 30, 40)
+    draw_field(pdf, "Procesador:", clean_text(equipment.processor or "-"), 20, 40)
+    draw_field(pdf, "Memoria RAM:", clean_text(equipment.ram or "-"), 20, 40, ln=1)
+    
+    draw_field(pdf, "Almacenamiento:", clean_text(equipment.storage or "-"), 30, 40)
+    draw_field(pdf, "Direccion IP:", clean_text(equipment.ip_address or "-"), 20, 40)
+    draw_field(pdf, "MAC Address:", clean_text(equipment.mac_address or "-"), 20, 40, ln=1)
+
+    pdf.ln(2)
+
+    # ... 3. LOGISTICA Y GARANTIA ...
+    draw_section_title(pdf, "3. LOGISTICA Y GARANTIA")
+    
+    ownership_str = str(equipment.ownership) if equipment.ownership else "Propio"
+    draw_field(pdf, "Tipo Propiedad:", clean_text(ownership_str), 30, 40)
+    draw_field(pdf, "Fecha Compra:", clean_text(str(equipment.purchase_date or "-")), 25, 35)
+    draw_field(pdf, "Fin Vida Util:", clean_text(str(equipment.end_of_life_date or "-")), 25, 35, ln=1)
+
+    # ... 4. TIMELINE EVENTS ...
+    pdf.ln(5)
+    draw_section_title(pdf, "4. HISTORIAL Y MOVIMIENTOS (LINEA DE TIEMPO)")
+    
+    if not events:
+        pdf.set_font("Arial", 'I', 9)
+        pdf.cell(0, 8, "No existen registros previos en el sistema para este equipo.", ln=1)
+    else:
+        pdf.set_font("Arial", 'B', 8)
+        pdf.set_fill_color(240, 240, 240)
+        pdf.cell(35, 6, "FECHA / HORA", border=1, fill=True)
+        pdf.cell(35, 6, "TIPO EVENTO", border=1, fill=True)
+        pdf.cell(80, 6, "DESCRIPCION / DETALLES", border=1, fill=True)
+        pdf.cell(40, 6, "USUARIO", border=1, ln=1, fill=True)
+        
+        pdf.set_font("Arial", size=8)
+        
+        for e in events:
+            # Check Y position to avoid drawing off-page
+            if pdf.get_y() > 260:
+                pdf.add_page()
+                pdf.set_font("Arial", 'B', 8)
+                pdf.set_fill_color(240, 240, 240)
+                pdf.cell(35, 6, "FECHA / HORA", border=1, fill=True)
+                pdf.cell(35, 6, "TIPO EVENTO", border=1, fill=True)
+                pdf.cell(80, 6, "DESCRIPCION / DETALLES", border=1, fill=True)
+                pdf.cell(40, 6, "USUARIO", border=1, ln=1, fill=True)
+                pdf.set_font("Arial", size=8)
+
+            date_str = e['date'].strftime('%Y-%m-%d %H:%M') if e['date'] else "-"
+            tipo_map = {
+                'timeline': "SISTEMA",
+                'maintenance': "MANTENIMIENTO",
+                'handover': "ACTA ENTREGA",
+                'round': "RONDA",
+                'component': "MOD. COMPONENTE",
+                'retirement': "BAJA"
+            }
+            tipo_label = tipo_map.get(e['type'], e['type'].upper())
+            
+            # Use MultiCell for description in case it's long, which requires tracking X/Y manually for row
+            x_start = pdf.get_x()
+            y_start = pdf.get_y()
+            
+            desc_text = clean_text(e['title'] + " - " + str(e['description']))
+            user_text = clean_text(str(e['user']))
+            
+            # Predict height needed for description
+            pdf.set_font("Arial", size=8)
+            lines = pdf.get_string_width(desc_text) / 80.0
+            h = max(6, int(max(1, lines) * 4) + 2)
+            
+            # Handle page break inside row logic roughly
+            if y_start + h > 275:
+                 pdf.add_page()
+                 x_start = pdf.get_x()
+                 y_start = pdf.get_y()
+                 pdf.set_font("Arial", size=8)
+            
+            pdf.rect(x_start, y_start, 35, h)
+            pdf.rect(x_start + 35, y_start, 35, h)
+            pdf.rect(x_start + 70, y_start, 80, h)
+            pdf.rect(x_start + 150, y_start, 40, h)
+            
+            pdf.set_xy(x_start, y_start)
+            pdf.cell(35, h, date_str, align='C')
+            pdf.cell(35, h, tipo_label, align='C')
+            
+            pdf.set_xy(x_start + 70, y_start + 1)
+            pdf.multi_cell(80, 4, desc_text, align='L')
+            
+            pdf.set_xy(x_start + 150, y_start)
+            pdf.cell(40, h, user_text, align='C')
+            
+            pdf.set_xy(x_start, y_start + h)
+
+    pdf.ln(15)
+
+    # Footer Signatures
+    y_sig = pdf.get_y()
+    if y_sig > 250:
+        pdf.add_page()
+        y_sig = pdf.get_y() + 20
+
+    pdf.set_font("Arial", 'B', 8)
+    pdf.line(60, y_sig, 150, y_sig)
+    pdf.set_xy(60, y_sig + 1)
+    pdf.cell(90, 5, "COORDINACION TIC - SISTEMAS", align='C', ln=1)
+    
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    pdf.set_font("Arial", 'I', 7)
+    pdf.set_xy(60, y_sig + 6)
+    pdf.cell(90, 5, f"Generado por Sistema el {timestamp}", align='C', ln=1)
+
+    # Output
+    pdf_content = pdf.output(dest='S')
+    buffer = io.BytesIO(pdf_content.encode('latin-1') if isinstance(pdf_content, str) else bytes(pdf_content))
+    filename = f"hoja-de-vida-{equipment.serial_number or equipment.pk}.pdf"
+    
+    return buffer, filename

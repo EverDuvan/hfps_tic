@@ -357,3 +357,23 @@ class ComponentLog(models.Model):
         ordering = ['-date']
 
 
+
+class RetirementLog(models.Model):
+    """Model to store the justification and evidence when retiring an asset."""
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='retirement_logs', null=True, blank=True, verbose_name=_("Equipo"))
+    peripheral = models.ForeignKey(Peripheral, on_delete=models.CASCADE, related_name='retirement_logs', null=True, blank=True, verbose_name=_("Periférico"))
+    
+    reason = models.TextField(verbose_name=_("Justificación de la Baja"), help_text=_("Explique el motivo por el cual el activo se da de baja (Ej. Daño irreparable, Obsolescencia)."))
+    photo = models.ImageField(upload_to='retirement_evidence/%Y/%m/', verbose_name=_("Evidencia Fotográfica"))
+    
+    date = models.DateTimeField(default=timezone.now, verbose_name=_("Fecha de Baja"))
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Realizado por"))
+
+    class Meta:
+        verbose_name = _("Acta de Baja")
+        verbose_name_plural = _("Actas de Baja")
+        ordering = ['-date']
+
+    def __str__(self):
+        asset = self.equipment.serial_number if self.equipment else (self.peripheral.serial_number if self.peripheral else "Activo")
+        return f"Baja de {asset} el {self.date.strftime('%Y-%m-%d')}"

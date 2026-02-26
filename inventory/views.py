@@ -4,10 +4,10 @@ from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter, MaintenanceSchedule, HandoverPeripheral, EquipmentRound, ComponentLog
+from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter, MaintenanceSchedule, HandoverPeripheral, EquipmentRound, ComponentLog, RetirementLog
 from .utils import generate_maintenance_pdf, generate_handover_pdf, export_to_excel
 from django.apps import apps
-from .forms import MaintenanceForm, EquipmentForm, AreaForm, CostCenterForm, CustomUserCreationForm, PeripheralForm, HandoverForm, ClientForm, PeripheralTypeForm
+from .forms import MaintenanceForm, EquipmentForm, AreaForm, CostCenterForm, CustomUserCreationForm, PeripheralForm, HandoverForm, ClientForm, PeripheralTypeForm, RetirementForm
 from django.contrib.auth.models import User
 from django.db.models import Count, Q, F
 from django.core.paginator import Paginator
@@ -1693,6 +1693,19 @@ def equipment_history_view(request, pk):
             'color': 'secondary'
         })
         
+    # 6. Retirement Logs
+    for r in equipment.retirement_logs.all():
+        events.append({
+            'type': 'retirement',
+            'date': r.date,
+            'title': f"Baja Oficial del Equipo",
+            'description': r.reason,
+            'user': r.performed_by.username if r.performed_by else 'N/A',
+            'icon': 'fa-ban',
+            'color': 'dark',
+            'photo_url': r.photo.url if r.photo else None
+        })
+        
     # Sort descending
     events.sort(key=lambda x: x['date'], reverse=True)
     
@@ -1701,3 +1714,150 @@ def equipment_history_view(request, pk):
         'events': events,
     }
     return render(request, 'inventory/equipment_history.html', context)
+
+@login_required
+def export_equipment_history_pdf(request, pk):
+    import io
+    
+    equipment = get_object_or_404(Equipment, pk=pk)
+    events = []
+    
+    # Replicate timeline logic
+    # 1. Timeline Events
+    for t in equipment.timeline_events.all():
+        events.append({
+            'type': 'timeline',
+            'date': t.date,
+            'title': f"Sistema: {t.title}",
+            'description': t.description,
+            'user': t.user.username if t.user else 'N/A',
+            'icon': 'fa-info-circle',
+            'color': 'primary'
+        })
+        
+    # 2. Maintenances
+    for m in equipment.maintenances.all():
+        sort_dt = timezone.datetime.combine(m.date, timezone.datetime.min.time())
+        if timezone.is_aware(equipment.created_at):
+            sort_dt = timezone.make_aware(sort_dt, timezone.get_current_timezone())
+        events.append({
+            'type': 'maintenance',
+            'date': sort_dt,
+            'title': f'Mantenimiento {m.get_maintenance_type_display()}',
+            'description': m.description,
+            'user': m.performed_by.username if m.performed_by else 'N/A',
+            'icon': 'fa-tools',
+            'color': 'info'
+        })
+        
+    # 3. Handovers
+    for h in equipment.handovers.all():
+        dest = h.destination_area.name if h.destination_area else 'N/A'
+        client = h.client.name if h.client else (h.receiver_name or 'N/A')
+        events.append({
+            'type': 'handover',
+            'date': h.date,
+            'title': f'Acta: {h.get_type_display()} a {dest}',
+            'description': f'Asignado a: {client}',
+            'user': h.technician.username if h.technician else 'N/A',
+            'icon': 'fa-exchange-alt',
+            'color': 'warning'
+        })
+        
+    # 4. Rounds
+    for r in equipment.rounds.all():
+        events.append({
+            'type': 'round',
+            'date': r.datetime,
+            'title': f"Ronda: {r.get_general_status_display()}",
+            'description': r.observations if r.observations else "Revisión técnica de rutina.",
+            'user': r.performed_by.username if r.performed_by else 'N/A',
+            'icon': 'fa-clipboard-check',
+            'color': 'success' if r.general_status == 'GOOD' else ('warning' if r.general_status == 'REGULAR' else 'danger')
+        })
+        
+    # 5. Component Logs
+    for c in equipment.component_logs.all():
+        events.append({
+            'type': 'component',
+            'date': c.date,
+            'title': f"{c.get_action_type_display()}: {c.component_name}",
+            'description': c.description,
+            'user': c.performed_by.username if c.performed_by else 'N/A',
+            'icon': 'fa-microchip',
+            'color': 'secondary'
+        })
+        
+    # 6. Retirement Logs
+    for r in equipment.retirement_logs.all():
+        events.append({
+            'type': 'retirement',
+            'date': r.date,
+            'title': f"Baja Oficial del Equipo",
+            'description': r.reason,
+            'user': r.performed_by.username if r.performed_by else 'N/A',
+            'icon': 'fa-ban',
+            'color': 'dark',
+            'photo_url': r.photo.url if r.photo else None
+        })
+        
+    events.sort(key=lambda x: x['date'], reverse=True)
+    
+    from .utils import generate_equipment_history_pdf
+    buffer, filename = generate_equipment_history_pdf(equipment, events)
+    return FileResponse(buffer, as_attachment=False, filename=filename)
+
+@login_required
+def retire_equipment_view(request, pk):
+    equipment = get_object_or_404(Equipment, pk=pk)
+    
+    if equipment.status == 'RETIRED':
+        messages.warning(request, "Este equipo ya se encuentra dado de baja.")
+        return redirect('inventory:equipment_detail', pk=equipment.pk)
+
+    if request.method == 'POST':
+        form = RetirementForm(request.POST, request.FILES)
+        if form.is_valid():
+            log = form.save(commit=False)
+            log.equipment = equipment
+            log.performed_by = request.user
+            log.save()
+            
+            # Change status
+            equipment.status = 'RETIRED'
+            equipment.save()
+            
+            messages.success(request, f"El equipo {equipment.serial_number} ha sido dado de baja exitosamente. (Acta de Baja #{log.id})")
+            return redirect('inventory:equipment_detail', pk=equipment.pk)
+    else:
+        form = RetirementForm()
+
+    return render(request, 'inventory/retire_asset_form.html', {'form': form, 'asset': equipment, 'asset_type': 'equipo'})
+
+@login_required
+def retire_peripheral_view(request, pk):
+    peripheral = get_object_or_404(Peripheral, pk=pk)
+    
+    if peripheral.status == 'RETIRED':
+        messages.warning(request, "Este periférico ya se encuentra dado de baja.")
+        return redirect('inventory:peripheral_detail', pk=peripheral.pk)
+
+    if request.method == 'POST':
+        form = RetirementForm(request.POST, request.FILES)
+        if form.is_valid():
+            log = form.save(commit=False)
+            log.peripheral = peripheral
+            log.performed_by = request.user
+            log.save()
+            
+            # Change status
+            peripheral.status = 'RETIRED'
+            peripheral.quantity = 0 # Logical implication
+            peripheral.save()
+            
+            messages.success(request, f"El periférico {peripheral.serial_number or peripheral} ha sido dado de baja exitosamente. (Acta de Baja #{log.id})")
+            return redirect('inventory:peripheral_detail', pk=peripheral.pk)
+    else:
+        form = RetirementForm()
+
+    return render(request, 'inventory/retire_asset_form.html', {'form': form, 'asset': peripheral, 'asset_type': 'periférico'})

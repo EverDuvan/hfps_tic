@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hoja de Vida: {{ equipment.serial_number }}</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2cm;
+
+            @top-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #1e3a8a;
+            font-size: 18pt;
+            margin: 0 0 5px 0;
+        }
+
+        .header p {
+            margin: 0;
+            color: #64748b;
+            font-size: 11pt;
+        }
+
+        /* Grid systems using floats/percentages for WeasyPrint compatibility */
+        .row {
+            clear: both;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .col {
+            float: left;
+            box-sizing: border-box;
+            padding-right: 15px;
+        }
+
+        .col-half {
+            width: 50%;
+        }
+
+        .col-third {
+            width: 33.33%;
+        }
+
+        .col-quarter {
+            width: 25%;
+        }
+
+        .section-title {
+            color: #1e40af;
+            font-size: 12pt;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 4px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .data-label {
+            font-size: 8pt;
+            color: #64748b;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .data-value {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        /* Timeline Box Styles */
+        .event-box {
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #3b82f6;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            page-break-inside: avoid;
+            background-color: #f8fafc;
+        }
+
+        .event-date {
+            font-size: 9pt;
+            font-weight: bold;
+            color: #475569;
+            margin-bottom: 5px;
+        }
+
+        .event-title {
+            font-size: 11pt;
+            color: #1e293b;
+            margin: 0 0 5px 0;
+        }
+
+        .event-desc {
+            font-size: 9.5pt;
+            margin: 0;
+            color: #334155;
+        }
+
+        .event-user {
+            font-size: 8pt;
+            color: #64748b;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Event type color overrides */
+        .event-maintenance {
+            border-left-color: #0ea5e9;
+        }
+
+        .event-handover {
+            border-left-color: #f59e0b;
+        }
+
+        .event-component {
+            border-left-color: #64748b;
+        }
+
+        .event-round {
+            border-left-color: #10b981;
+        }
+
+        .event-retirement {
+            border-left-color: #0f172a;
+        }
+
+        .signature-box {
+            margin-top: 50px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .signature-line {
+            width: 250px;
+            border-top: 1px solid #000;
+            margin: 0 auto 5px auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Hoja de Vida de Equipo</h1>
+        <p>{{ equipment.brand }} {{ equipment.model }} - Reporte Oficial</p>
+    </div>
+
+    <!-- Identificación Principal -->
+    <div class="section-title">Identificación Principal</div>
+    <div class="row">
+        <div class="col col-half">
+            <span class="data-label">Equipo</span>
+            <span class="data-value">{{ equipment.get_type_display }}</span>
+        </div>
+        <div class="col col-half">
+            <span class="data-label">Serial / Identificador</span>
+            <span class="data-value">{{ equipment.serial_number }}</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-third">
+            <span class="data-label">Estado</span>
+            <span class="data-value">{{ equipment.get_status_display }}</span>
+        </div>
+        <div class="col col-third">
+            <span class="data-label">Ubicación Actual</span>
+            <span class="data-value">{{ equipment.area.name|default:"Sin asignar" }}</span>
+        </div>
+        <div class="col col-third">
+            <span class="data-label">Dirección IP</span>
+            <span class="data-value">{{ equipment.ip_address|default:"N/A" }}</span>
+        </div>
+    </div>
+
+    <!-- Especificaciones Técnicas -->
+    <div class="section-title">Especificaciones Técnicas</div>
+    <div class="row">
+        <div class="col col-quarter">
+            <span class="data-label">Sistema Operativo</span>
+            <span class="data-value">{{ equipment.operating_system|default:"-" }}</span>
+        </div>
+        <div class="col col-quarter">
+            <span class="data-label">Procesador</span>
+            <span class="data-value">{{ equipment.processor|default:"-" }}</span>
+        </div>
+        <div class="col col-quarter">
+            <span class="data-label">Memoria RAM</span>
+            <span class="data-value">{{ equipment.ram|default:"-" }}</span>
+        </div>
+        <div class="col col-quarter">
+            <span class="data-label">Almacenamiento</span>
+            <span class="data-value">{{ equipment.storage|default:"-" }}</span>
+        </div>
+    </div>
+
+    <div style="clear: both; margin-top: 20px;"></div>
+
+    <!-- Fechas y Adquisición -->
+    <div class="section-title">Logística y Garantía</div>
+    <div class="row">
+        <div class="col col-third">
+            <span class="data-label">Tipo de Propiedad</span>
+            <span class="data-value">{{ equipment.ownership|default:"Propio" }}</span>
+        </div>
+        <div class="col col-third">
+            <span class="data-label">Fecha de Compra</span>
+            <span class="data-value">{{ equipment.purchase_date|default:"-" }}</span>
+        </div>
+        <div class="col col-third">
+            <span class="data-label">Fin de Vida Útil</span>
+            <span class="data-value">{{ equipment.end_of_life_date|default:"-" }}</span>
+        </div>
+    </div>
+
+    <div style="clear: both; margin-top: 30px;"></div>
+
+    <!-- Timeline Registros -->
+    <div class="section-title">Historial y Movimientos (Línea de Tiempo)</div>
+
+    {% if not events %}
+    <p style="color: #64748b; font-style: italic;">No existen registros previos para este equipo.</p>
+    {% endif %}
+
+    {% for event in events %}
+    <div class="event-box event-{{ event.type }}">
+        <div class="event-date">{{ event.date|date:"l, d \d\e F \d\e Y - H:i" }}</div>
+        <h4 class="event-title">{{ event.title }}</h4>
+        <p class="event-desc">{{ event.description|linebreaksbr }}</p>
+        {% if event.user %}
+        <div class="event-user">Registrado por: {{ event.user|title }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Footer for signatures if required -->
+    <div class="signature-box" style="margin-top: 80px;">
+        <div class="signature-line"></div>
+        <span class="data-label">Generado por {{ request.user.get_full_name|default:request.user.username }}</span>
+        <span style="font-size: 8pt; color: #94a3b8; display: block; margin-top: 5px;">{{ timestamp|date:"Y-m-d H:i:s"
+            }}</span>
+    </div>
+
+</body>
+
+</html>

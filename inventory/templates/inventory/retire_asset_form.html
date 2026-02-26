@@ -1,0 +1,62 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Dar de Baja {{ asset_type|title }}{% endblock %}
+{% block page_title %}Dar de Baja: {{ asset.serial_number|default:asset.model|default:asset }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div
+        style="background-color: #fef2f2; border: 1px solid #f87171; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+        <h3 style="color: #991b1b; margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-exclamation-triangle"></i> Advertencia de Baja
+        </h3>
+        <p style="color: #7f1d1d; margin-bottom: 0;">
+            Estás a punto de dar de baja permanentemente el {{ asset_type }} <strong>{{ asset }}</strong>.
+            Esta acción auditará la salida del activo del inventario físico. Por políticas de seguridad,
+            <strong>es obligatorio</strong> adjuntar una justificación escrita y una fotografía como evidencia del daño
+            o motivo.
+        </p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.reason.id_for_label }}"
+                style="display: block; font-weight: 500; margin-bottom: 0.5rem;">
+                Justificación Detallada <span style="color: red;">*</span>
+            </label>
+            {{ form.reason }}
+            {% if form.reason.help_text %}
+            <small style="color: #6b7280; display: block; margin-top: 0.25rem;">{{ form.reason.help_text }}</small>
+            {% endif %}
+            {% if form.reason.errors %}
+            <div style="color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.reason.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <label for="{{ form.photo.id_for_label }}" style="display: block; font-weight: 500; margin-bottom: 0.5rem;">
+                Evidencia Fotográfica <span style="color: red;">*</span>
+            </label>
+            {{ form.photo }}
+            {% if form.photo.errors %}
+            <div style="color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.photo.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            {% if asset_type == 'equipo' %}
+            <a href="{% url 'inventory:equipment_detail' asset.pk %}" class="btn"
+                style="background-color: #e5e7eb; color: #374151;">Cancelar</a>
+            {% else %}
+            <a href="{% url 'inventory:peripheral_detail' asset.pk %}" class="btn"
+                style="background-color: #e5e7eb; color: #374151;">Cancelar</a>
+            {% endif %}
+            <button type="submit" class="btn" style="background-color: #dc2626; color: white;">
+                <i class="fas fa-trash-alt"></i> Confirmar Baja
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

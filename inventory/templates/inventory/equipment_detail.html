@@ -28,6 +28,10 @@
         <a href="{% url 'inventory:equipment_edit' equipment.pk %}" class="btn btn-primary">✏️ Editar Equipo</a>
         <a href="{% url 'inventory:equipment_qr' equipment.pk %}" target="_blank" class="btn"
             style="background-color: #4b5563; color: white;">📱 Ver QR</a>
+        {% if equipment.status != 'RETIRED' %}
+        <a href="{% url 'inventory:retire_equipment' equipment.pk %}" class="btn"
+            style="background-color: #dc2626; color: white; margin-left: auto;">🗑️ Dar de Baja</a>
+        {% endif %}
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
@@ -98,8 +102,7 @@
                     {{ equipment.ownership|default:"-" }}
                 </span>
             </div>
-            {% if equipment.ownership and equipment.ownership.name == 'Alquilado / Leasing' or equipment.ownership and
-            equipment.ownership.name == 'Comodato' %}
+            {% if equipment.ownership and equipment.ownership.name in 'Alquilado / Leasing, Comodato' %}
             <div>
                 <span style="display: block; font-size: 0.75rem; color: #6b7280;">Proveedor</span>
                 <span style="font-weight: 500;">{{ equipment.provider_name|default:"-" }}</span>

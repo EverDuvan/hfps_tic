@@ -22,8 +22,12 @@
     </div>
 
     <!-- Edit Button -->
-    <div style="margin-bottom: 2rem;">
+    <div style="margin-bottom: 2rem; display: flex; gap: 1rem;">
         <a href="{% url 'inventory:peripheral_edit' peripheral.pk %}" class="btn btn-primary">✏️ Editar Periférico</a>
+        {% if peripheral.status != 'RETIRED' %}
+        <a href="{% url 'inventory:retire_peripheral' peripheral.pk %}" class="btn"
+            style="background-color: #dc2626; color: white;">🗑️ Dar de Baja</a>
+        {% endif %}
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
