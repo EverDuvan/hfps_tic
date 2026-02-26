@@ -19,7 +19,7 @@ logger = logging.getLogger('inventory')
 
 __all__ = [
     'maintenance_acta_view', 'handover_acta_view', 'export_data_view',
-    'equipment_history_pdf_view',
+    'export_equipment_history_pdf',
 ]
 
 
@@ -134,7 +134,7 @@ def export_data_view(request, model_name):
 
 
 @login_required
-def equipment_history_pdf_view(request, pk):
+def export_equipment_history_pdf(request, pk):
     """Generate a PDF with equipment specs + full history (Hoja de Vida)."""
     equipment = get_object_or_404(Equipment, pk=pk)
 

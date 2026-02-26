@@ -19,6 +19,7 @@ urlpatterns = [
     path('inventory/equipment/<int:pk>/edit/', views.equipment_edit_view, name='equipment_edit'),
     path('inventory/equipment/<int:pk>/history/', views.equipment_history_view, name='equipment_history'),
     path('inventory/equipment/<int:pk>/history/pdf/', views.export_equipment_history_pdf, name='export_equipment_history_pdf'),
+    path('inventory/equipment/<int:pk>/retire/', views.equipment_retire_view, name='equipment_retire'),
     path('inventory/equipment/<int:pk>/component/add/', views.component_log_create_view, name='component_log_create'),
     path('inventory/new/', views.equipment_create_view, name='equipment_create'),
     path('inventory/area/new/', views.area_create_view, name='area_create'),

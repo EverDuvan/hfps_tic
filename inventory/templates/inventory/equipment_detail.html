@@ -28,6 +28,15 @@
         <a href="{% url 'inventory:equipment_edit' equipment.pk %}" class="btn btn-primary">✏️ Editar Equipo</a>
         <a href="{% url 'inventory:equipment_qr' equipment.pk %}" target="_blank" class="btn"
             style="background-color: #4b5563; color: white;">📱 Ver QR</a>
+        {% if equipment.status != 'RETIRED' %}
+        <form method="post" action="{% url 'inventory:equipment_retire' equipment.pk %}" style="margin: 0;"
+            onsubmit="return confirm('¿Está seguro que desea dar de baja este equipo? Esta acción cambiará su estado a RETIRADO.');">
+            {% csrf_token %}
+            <button type="submit" class="btn" style="background-color: #ef4444; color: white;">
+                🚫 Dar de Baja
+            </button>
+        </form>
+        {% endif %}
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
@@ -98,8 +107,7 @@
                     {{ equipment.ownership|default:"-" }}
                 </span>
             </div>
-            {% if equipment.ownership and equipment.ownership.name == 'Alquilado / Leasing' or equipment.ownership and
-            equipment.ownership.name == 'Comodato' %}
+            {% if equipment.ownership and equipment.ownership.name == 'Alquilado / Leasing' or equipment.ownership and equipment.ownership.name == 'Comodato' %}
             <div>
                 <span style="display: block; font-size: 0.75rem; color: #6b7280;">Proveedor</span>
                 <span style="font-weight: 500;">{{ equipment.provider_name|default:"-" }}</span>

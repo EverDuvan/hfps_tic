@@ -13,9 +13,11 @@ class EquipmentSerializer(serializers.ModelSerializer):
         model = Equipment
         fields = [
             'id', 'serial_number', 'type', 'brand', 'model', 'status',
-            'area', 'area_name', 'ip_address', 'ip_type', 'mac_address',
-            'hostname', 'purchase_date', 'warranty_expiry', 'lifespan_years',
-            'processor', 'ram', 'storage', 'os', 'os_version',
+            'area', 'area_name', 'operating_system', 'os_user',
+            'processor', 'ram', 'storage', 'screen_size',
+            'ip_address', 'ip_type', 'voltage', 'amperage',
+            'ownership', 'provider_name', 'rental_contract_ref',
+            'support_phone', 'purchase_date', 'warranty_expiry', 'lifespan_years',
             'created_at', 'updated_at',
         ]
 

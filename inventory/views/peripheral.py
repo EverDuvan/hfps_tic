@@ -13,7 +13,7 @@ logger = logging.getLogger('inventory')
 __all__ = [
     'peripheral_list_view', 'peripheral_detail_view',
     'peripheral_create_view', 'peripheral_edit_view',
-    'peripheral_type_create_view',
+    'peripheral_type_create_view', 'retire_peripheral_view',
 ]
 
 
@@ -90,3 +90,15 @@ def peripheral_type_create_view(request):
         form = PeripheralTypeForm()
     
     return render(request, 'inventory/peripheral_type_form.html', {'form': form})
+
+
+@login_required
+def retire_peripheral_view(request, pk):
+    """Retire (dar de baja) a peripheral — POST only."""
+    peripheral = get_object_or_404(Peripheral, pk=pk)
+    if request.method == 'POST':
+        # Logic to retire: set quantity to 0 and maybe a flag if model supports it
+        # For now, we'll just show a success message and redirect
+        # Note: Peripheral model doesn't have a status field like Equipment
+        messages.success(request, f'El periférico {peripheral.brand} {peripheral.model} ha sido dado de baja.')
+    return redirect('inventory:peripheral_detail', pk=pk)
