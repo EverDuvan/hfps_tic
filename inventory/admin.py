@@ -113,7 +113,7 @@ class MaintenanceAdmin(admin.ModelAdmin):
     )
     
     def acta_link(self, obj):
-        url = reverse('maintenance_acta', args=[obj.pk])
+        url = reverse('inventory:maintenance_acta', args=[obj.pk])
         return format_html('<a class="button" href="{}" target="_blank">Generar Acta</a>', url)
     acta_link.short_description = "Acta"
 
@@ -132,7 +132,7 @@ class HandoverAdmin(admin.ModelAdmin):
     actions = [export_as_excel_action]
 
     def acta_link(self, obj):
-        url = reverse('handover_acta', args=[obj.pk])
+        url = reverse('inventory:handover_acta', args=[obj.pk])
         return format_html('<a class="button" href="{}" target="_blank">Generar Acta</a>', url)
     acta_link.short_description = "Acta"
 

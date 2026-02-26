@@ -120,7 +120,6 @@ class Equipment(models.Model):
     support_phone = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Teléfono Soporte"))
 
     created_at = models.DateTimeField(auto_now_add=True)
-    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     history = HistoricalRecords()
 
@@ -257,8 +256,7 @@ class Handover(models.Model):
     observations = models.TextField(blank=True, null=True, verbose_name=_("Observaciones"))
     acta_pdf = models.FileField(upload_to='handover_actas/', blank=True, null=True, verbose_name=_("Acta de Entrega PDF"))
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f"{self.get_type_display()} - {self.date.strftime('%Y-%m-%d %H:%M')}"

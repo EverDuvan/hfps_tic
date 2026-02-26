@@ -6,6 +6,16 @@ __pycache__
 db.sqlite3
 media
 
+# Sensitive files #
+*.pem
+*.key
+
+# Debug / temp files #
+debug_*.pdf
+debug_*.py
+test_fpdf*.py
+seed_*.py
+
 # Backup files # 
 *.bak 
 

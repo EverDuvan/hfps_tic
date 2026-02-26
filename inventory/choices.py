@@ -14,7 +14,7 @@ EQUIPMENT_STATUS_CHOICES = [
     ('ACTIVE', 'Activo'),
     ('MAINTENANCE', 'En Mantenimiento'),
     ('RETIRED', 'Dado de Baja'),
-    ('aSTOCK', 'En Stock'),
+    ('STOCK', 'En Stock'),
 ]
 
 PERIPHERAL_TYPE_CHOICES = [

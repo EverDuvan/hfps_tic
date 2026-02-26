@@ -101,9 +101,6 @@ class PeripheralForm(forms.ModelForm):
                 if 'form-select' not in current_classes:
                     self.fields[field].widget.attrs['class'] = (current_classes + ' form-control').strip()
 
-                if 'form-select' not in current_classes:
-                    self.fields[field].widget.attrs['class'] = (current_classes + ' form-control').strip()
-
 class PeripheralTypeForm(forms.ModelForm):
     class Meta:
         model = PeripheralType
@@ -185,15 +182,6 @@ class EquipmentRoundForm(forms.ModelForm):
             'observations': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
 
-class ComponentLogForm(forms.ModelForm):
-    class Meta:
-        model = ComponentLog
-        fields = ['action_type', 'component_name', 'description']
-        widgets = {
-            'action_type': forms.Select(attrs={'class': 'form-select'}),
-            'component_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Memoria RAM DDR4, Disco SSD...'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Detalles del cambio...'})
-        }
 
 class ComponentLogForm(forms.ModelForm):
     # Field specifically for selecting a peripheral from stock
