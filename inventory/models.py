@@ -9,7 +9,7 @@ from .choices import (
     EQUIPMENT_TYPE_CHOICES, EQUIPMENT_STATUS_CHOICES,
     PERIPHERAL_TYPE_CHOICES, PERIPHERAL_STATUS_CHOICES,
     MAINTENANCE_TYPE_CHOICES, HANDOVER_TYPE_CHOICES,
-    IP_TYPE_CHOICES, OWNERSHIP_CHOICES
+    IP_TYPE_CHOICES, OWNERSHIP_CHOICES, COMPONENT_ACTION_CHOICES
 )
 
 class CostCenter(models.Model):
@@ -320,6 +320,23 @@ class EquipmentRound(models.Model):
     class Meta:
         verbose_name = _("Ronda de Equipo")
         verbose_name_plural = _("Rondas de Equipos")
-        ordering = ['-datetime']
+
+class ComponentLog(models.Model):
+    """Model to track internal hardware changes for the Equipment Hoja de Vida."""
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='component_logs', verbose_name=_("Equipo"))
+    date = models.DateTimeField(default=timezone.now, verbose_name=_("Fecha y Hora"))
+    action_type = models.CharField(max_length=20, choices=COMPONENT_ACTION_CHOICES, verbose_name=_("Tipo de Acción"))
+    component_name = models.CharField(max_length=100, verbose_name=_("Pieza / Componente (Ej: RAM, Disco Duro)"))
+    description = models.TextField(verbose_name=_("Descripción de los Cambios"))
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name=_("Realizado por"))
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"{self.get_action_type_display()} {self.component_name} - {self.equipment}"
+
+    class Meta:
+        verbose_name = _("Cambio de Componente")
+        verbose_name_plural = _("Cambios de Componentes")
+        ordering = ['-date']
 
 

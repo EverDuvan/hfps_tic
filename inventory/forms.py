@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import Maintenance, Equipment, Area, CostCenter, Peripheral, Handover, Client, PeripheralType, EquipmentRound
+from .models import Maintenance, Equipment, Area, CostCenter, Peripheral, Handover, Client, PeripheralType, EquipmentRound, ComponentLog
 from django.contrib.auth.models import User
 
 class CustomUserCreationForm(UserCreationForm):
@@ -183,4 +183,24 @@ class EquipmentRoundForm(forms.ModelForm):
             'printer_status': forms.Select(attrs={'class': 'form-select'}),
             'general_status': forms.Select(attrs={'class': 'form-select'}),
             'observations': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
+
+class ComponentLogForm(forms.ModelForm):
+    class Meta:
+        model = ComponentLog
+        fields = ['action_type', 'component_name', 'description']
+        widgets = {
+            'action_type': forms.Select(attrs={'class': 'form-select'}),
+            'component_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Memoria RAM DDR4, Disco SSD...'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Detalles del cambio...'})
+        }
+
+class ComponentLogForm(forms.ModelForm):
+    class Meta:
+        model = ComponentLog
+        fields = ['action_type', 'component_name', 'description']
+        widgets = {
+            'action_type': forms.Select(attrs={'class': 'form-select'}),
+            'component_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Memoria RAM DDR4, Disco SSD...'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Detalles del cambio...'})
         }

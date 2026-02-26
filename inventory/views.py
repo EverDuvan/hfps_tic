@@ -3,7 +3,7 @@ from django.http import HttpResponse, FileResponse, Http404
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter, MaintenanceSchedule, HandoverPeripheral, EquipmentRound
+from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter, MaintenanceSchedule, HandoverPeripheral, EquipmentRound, ComponentLog
 from .utils import generate_maintenance_pdf, generate_handover_pdf, export_to_excel
 from django.apps import apps
 from .forms import MaintenanceForm, EquipmentForm, AreaForm, CostCenterForm, CustomUserCreationForm, PeripheralForm, HandoverForm, ClientForm, PeripheralTypeForm
@@ -1495,3 +1495,105 @@ def equipment_round_create_view(request):
         form = EquipmentRoundForm()
     
     return render(request, 'inventory/equipment_round_form.html', {'form': form, 'title': 'Nueva Ronda de Equipos'})
+
+@login_required
+def component_log_create_view(request, pk):
+    equipment = get_object_or_404(Equipment, pk=pk)
+    from .forms import ComponentLogForm
+    
+    if request.method == 'POST':
+        form = ComponentLogForm(request.POST)
+        if form.is_valid():
+            log = form.save(commit=False)
+            log.equipment = equipment
+            log.performed_by = request.user
+            log.save()
+            messages.success(request, f"¡Cambio de componente '{log.component_name}' registrado exitosamente!")
+            return redirect('inventory:equipment_history', pk=equipment.pk)
+    else:
+        form = ComponentLogForm()
+    
+    context = {
+        'form': form,
+        'equipment': equipment,
+    }
+    return render(request, 'inventory/component_log_form.html', context)
+
+@login_required
+def equipment_history_view(request, pk):
+    equipment = get_object_or_404(Equipment, pk=pk)
+    
+    events = []
+    
+    # 1. Registration
+    events.append({
+        'type': 'entry',
+        'date': equipment.created_at,
+        'title': 'Registro Inicial',
+        'description': f'Equipo dado de alta en el sistema.',
+        'icon': 'fa-plus-circle',
+        'color': 'primary'
+    })
+    
+    # 2. Maintenances
+    for m in equipment.maintenances.all():
+        sort_dt = timezone.datetime.combine(m.date, timezone.datetime.min.time())
+        if timezone.is_aware(equipment.created_at):
+            sort_dt = timezone.make_aware(sort_dt, timezone.get_current_timezone())
+            
+        events.append({
+            'type': 'maintenance',
+            'date': sort_dt,
+            'title': f'Mantenimiento {m.get_maintenance_type_display()}',
+            'description': m.description,
+            'user': m.performed_by.username if m.performed_by else 'N/A',
+            'icon': 'fa-tools',
+            'color': 'info'
+        })
+        
+    # 3. Handovers
+    for h in equipment.handovers.all():
+        dest = h.destination_area.name if h.destination_area else 'N/A'
+        client = h.client.name if h.client else (h.receiver_name or 'N/A')
+        events.append({
+            'type': 'handover',
+            'date': h.date,
+            'title': f'Acta: {h.get_type_display()} a {dest}',
+            'description': f'Asignado a: {client}',
+            'user': h.technician.username if h.technician else 'N/A',
+            'icon': 'fa-exchange-alt',
+            'color': 'warning'
+        })
+        
+    # 4. Rounds
+    for r in equipment.rounds.all():
+        events.append({
+            'type': 'round',
+            'date': r.datetime,
+            'title': f"Ronda: {r.get_general_status_display()}",
+            'description': r.observations if r.observations else "Revisión técnica de rutina.",
+            'user': r.performed_by.username if r.performed_by else 'N/A',
+            'icon': 'fa-clipboard-check',
+            'color': 'success' if r.general_status == 'GOOD' else ('warning' if r.general_status == 'REGULAR' else 'danger')
+        })
+        
+    # 5. Component Logs
+    for c in equipment.component_logs.all():
+        events.append({
+            'type': 'component',
+            'date': c.date,
+            'title': f"{c.get_action_type_display()}: {c.component_name}",
+            'description': c.description,
+            'user': c.performed_by.username if c.performed_by else 'N/A',
+            'icon': 'fa-microchip',
+            'color': 'secondary'
+        })
+        
+    # Sort descending
+    events.sort(key=lambda x: x['date'], reverse=True)
+    
+    context = {
+        'equipment': equipment,
+        'events': events,
+    }
+    return render(request, 'inventory/equipment_history.html', context)

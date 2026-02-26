@@ -53,3 +53,10 @@ OWNERSHIP_CHOICES = [
     ('OWNED', 'Propio (Institución)'),
     ('RENTED', 'Alquilado / Leasing'),
 ]
+
+COMPONENT_ACTION_CHOICES = [
+    ('ADDED', 'Agregado'),
+    ('REMOVED', 'Retirado'),
+    ('REPLACED', 'Reemplazado'),
+    ('UPGRADED', 'Mejorado / Actualizado'),
+]

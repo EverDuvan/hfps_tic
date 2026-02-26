@@ -15,15 +15,19 @@
             border-radius: 9999px; 
             font-weight: 500;
             background: {% if equipment.status == 'ACTIVE' %}rgba(74, 222, 128, 0.2){% else %}rgba(248, 113, 113, 0.2){% endif %};
-            color: {% if equipment.status == 'ACTIVE' %}#15803d{% else %}#b91c1c{% endif %};
+            color: {% if equipment.status == 'ACTIVE' %}#15803d{% else %}#b91c1c{% endif %};">
             {{ equipment.get_status_display }}
         </span>
     </div>
-    
-    <div style=" margin-bottom: 2rem; display: flex; gap: 1rem;">
-            <a href="{% url 'inventory:equipment_edit' equipment.pk %}" class="btn btn-primary">✏️ Editar Equipo</a>
-            <a href="{% url 'inventory:equipment_qr' equipment.pk %}" target="_blank" class="btn"
-                style="background-color: #4b5563; color: white;">📱 Ver QR</a>
+
+    <div style=" margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="{% url 'inventory:equipment_history' equipment.pk %}" class="btn"
+            style="background-color: #8e44ad; color: white;">📄 Hoja de Vida</a>
+        <a href="{% url 'inventory:component_log_create' equipment.pk %}" class="btn"
+            style="background-color: #2c3e50; color: white;">⚙️ + Componente</a>
+        <a href="{% url 'inventory:equipment_edit' equipment.pk %}" class="btn btn-primary">✏️ Editar Equipo</a>
+        <a href="{% url 'inventory:equipment_qr' equipment.pk %}" target="_blank" class="btn"
+            style="background-color: #4b5563; color: white;">📱 Ver QR</a>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
@@ -90,7 +94,8 @@
             <div>
                 <span style="display: block; font-size: 0.75rem; color: #6b7280;">Tipo de Propiedad</span>
                 <span
-                    style="font-weight: 500; {% if equipment.ownership_type == 'RENTED' %}color: #d97706;{% endif %}">{{ equipment.get_ownership_type_display }}</span>
+                    style="font-weight: 500; {% if equipment.ownership_type == 'RENTED' %}color: #d97706;{% endif %}">{{
+                    equipment.get_ownership_type_display }}</span>
             </div>
             {% if equipment.ownership_type == 'RENTED' %}
             <div>
