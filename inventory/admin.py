@@ -159,3 +159,17 @@ class EquipmentRoundAdmin(admin.ModelAdmin):
             'fields': ('general_status', 'observations')
         }),
     )
+
+from .models import SystemSettings
+
+@admin.register(SystemSettings)
+class SystemSettingsAdmin(admin.ModelAdmin):
+    list_display = ('site_name',)
+    
+    def has_add_permission(self, request):
+        if SystemSettings.objects.exists():
+            return False
+        return True
+
+    def has_delete_permission(self, request, obj=None):
+        return False

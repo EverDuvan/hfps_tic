@@ -165,9 +165,14 @@ def export_report_pdf(request):
     class PDF(FPDF):
         def header(self):
             from django.conf import settings
-            logo_path = os.path.join(settings.BASE_DIR, 'inventory', 'static', 'img', 'hfps.jpg')
-            if not os.path.exists(logo_path):
-                logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'hfps.jpg')
+            from inventory.models import SystemSettings
+            sys_settings = SystemSettings.load()
+            if sys_settings and sys_settings.logo and os.path.exists(sys_settings.logo.path):
+                logo_path = sys_settings.logo.path
+            else:
+                logo_path = os.path.join(settings.BASE_DIR, 'inventory', 'static', 'img', 'hfps.jpg')
+                if not os.path.exists(logo_path):
+                    logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'hfps.jpg')
             
             if os.path.exists(logo_path):
                 self.image(logo_path, 10, 8, 33)

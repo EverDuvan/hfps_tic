@@ -53,15 +53,18 @@ def draw_header(pdf, title, doc_code, date_obj):
     pdf.set_font("Arial", size=8)
     start_y = pdf.get_y()
     
-    # Logo (Left) - using the hfps.jpg
-    # Assuming static files are collected or accessible. For development, we might need absolute path or find static file.
+    # Logo (Left) - using the SystemSettings or fallback to hfps.jpg
     import os
     from django.conf import settings
+    from .models import SystemSettings
     
-    logo_path = os.path.join(settings.BASE_DIR, 'inventory', 'static', 'img', 'hfps.jpg')
-    # Fallback to root static if not found there (since we moved it to root static/img)
-    if not os.path.exists(logo_path):
-        logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'hfps.jpg')
+    sys_settings = SystemSettings.load()
+    if sys_settings and sys_settings.logo and os.path.exists(sys_settings.logo.path):
+        logo_path = sys_settings.logo.path
+    else:
+        logo_path = os.path.join(settings.BASE_DIR, 'inventory', 'static', 'img', 'hfps.jpg')
+        if not os.path.exists(logo_path):
+            logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'hfps.jpg')
 
     if os.path.exists(logo_path):
         pdf.image(logo_path, x=10, y=start_y, w=30, h=20)

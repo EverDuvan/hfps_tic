@@ -375,3 +375,27 @@ class RetirementLog(models.Model):
     def __str__(self):
         asset = self.equipment.serial_number if self.equipment else (self.peripheral.serial_number if self.peripheral else "Activo")
         return f"Baja de {asset} el {self.date.strftime('%Y-%m-%d')}"
+
+class SystemSettings(models.Model):
+    """Singleton model to store global system settings like the logo."""
+    site_name = models.CharField(max_length=100, default="HFPS TIC", verbose_name=_("Nombre del Sitio"))
+    logo = models.ImageField(upload_to='site_logo/', blank=True, null=True, verbose_name=_("Logo del Sistema"), help_text=_("Sube una imagen para cambiar el logo principal de la aplicación."))
+
+    class Meta:
+        verbose_name = _("Configuración del Sistema")
+        verbose_name_plural = _("Configuración del Sistema")
+
+    def __str__(self):
+        return self.site_name
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super(SystemSettings, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def load(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj

@@ -14,8 +14,13 @@
 
     <nav class="sidebar">
         <div style="text-align: center; margin-bottom: 2rem;">
-            <img src="{% static 'img/hfps.jpg' %}" alt="HFPS Logo"
+            {% if system_settings and system_settings.logo %}
+            <img src="{{ system_settings.logo.url }}" alt="{{ system_settings.site_name|default:'HFPS Logo' }}"
                 style="max-width: 80%; height: auto; border-radius: 8px;">
+            {% else %}
+            <img src="{% static 'img/hfps.jpg' %}?v=3" alt="HFPS Logo"
+                style="max-width: 80%; height: auto; border-radius: 8px;">
+            {% endif %}
         </div>
         <div class="nav-links">
             <a href="{% url 'inventory:dashboard' %}"

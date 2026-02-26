@@ -1,4 +1,5 @@
 {% extends 'inventory/base.html' %}
+{% load static %}
 
 {% block title %}Manual de Usuario - HFPS TIC{% endblock %}
 
@@ -38,7 +39,8 @@
                 Activos, Mantenimientos del Mes).</li>
             <li><strong>Alertas Críticas:</strong> Cuadros de aviso en rojo que te notificarán automáticamente si hay
                 <em>Garantías por vencer</em> (en los próximos 90 días) o si algún periférico ha caído por debajo de su
-                <em>Stock Mínimo</em>.</li>
+                <em>Stock Mínimo</em>.
+            </li>
             <li><strong>Gráficos:</strong> Gráficos circulares interactivos segmentando el hardware por estado (Activo,
                 Inactivo, En Reparación) o por tipo (PC, Portátil, Impresora).</li>
         </ul>
@@ -72,7 +74,8 @@
             <li>Asocia los aspectos financieros como la <strong style="color: #065f46;">Orden de Compra</strong>,
                 <strong style="color: #065f46;">Fecha de Compra</strong> y el <strong style="color: #065f46;">Centro de
                     Costos</strong>. Estos campos son vitales para calcular legalmente la Vida Útil de depreciación del
-                equipo.</li>
+                equipo.
+            </li>
             <li>Al guardar, el sistema generará de forma automática una etiqueta <strong>Código QR</strong> descargable,
                 lista para imprimir y pegar directamente en la carcasa física del equipo.</li>
         </ul>
@@ -137,6 +140,13 @@
                     style="background: #fef08a; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">Pendiente</span>
                 de mantenimiento, o retirarlo. </li>
         </ul>
+        {% if system_settings and system_settings.logo %}
+        <img src="{{ system_settings.logo.url }}" alt="{{ system_settings.site_name|default:'HFPS Logo' }}"
+            style="max-width: 80%; height: auto; border-radius: 8px;">
+        {% else %}
+        <img src="{% static 'img/hfps.jpg' %}?v=3" alt="HFPS Logo"
+            style="max-width: 80%; height: auto; border-radius: 8px;">
+        {% endif %}
     </div>
 
     <!-- Módulo 5: Configuración y Usuarios -->
