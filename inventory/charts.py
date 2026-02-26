@@ -116,3 +116,28 @@ def generate_handover_by_area_chart(data):
     plt.tight_layout()
     
     return get_chart_buffer()
+
+def generate_round_status_chart(data):
+    """
+    Generates a pie chart for round general status.
+    data: list of dicts [{'general_status': 'GOOD', 'count': 10}, ...]
+    """
+    if not data:
+        return None
+        
+    # Map raw value to label manually or from somewhat known mappings
+    label_map = {
+        'GOOD': 'Bueno',
+        'REGULAR': 'Regular',
+        'BAD': 'Malo'
+    }
+    
+    labels = [label_map.get(item['general_status'], item['general_status']) for item in data]
+    counts = [item['count'] for item in data]
+    
+    plt.figure(figsize=(5, 5))
+    plt.pie(counts, labels=labels, autopct='%1.1f%%', startangle=90, colors=['#27ae60', '#f39c12', '#e74c3c', '#95a5a6'])
+    plt.title('Estado General de Rondas')
+    plt.tight_layout()
+    
+    return get_chart_buffer()

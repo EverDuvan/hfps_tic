@@ -3,7 +3,7 @@ from django.http import HttpResponse, FileResponse, Http404
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter, MaintenanceSchedule, HandoverPeripheral
+from .models import Maintenance, Handover, Equipment, Peripheral, Area, CostCenter, MaintenanceSchedule, HandoverPeripheral, EquipmentRound
 from .utils import generate_maintenance_pdf, generate_handover_pdf, export_to_excel
 from django.apps import apps
 from .forms import MaintenanceForm, EquipmentForm, AreaForm, CostCenterForm, CustomUserCreationForm, PeripheralForm, HandoverForm, ClientForm, PeripheralTypeForm
@@ -887,6 +887,7 @@ def reports_dashboard_view(request):
     # 2. Main QuerySets
     maintenances = Maintenance.objects.filter(date__range=[start_date, end_date])
     handovers = Handover.objects.filter(date__date__range=[start_date, end_date])
+    rounds = EquipmentRound.objects.filter(datetime__date__range=[start_date, end_date])
     equipments = Equipment.objects.all()
 
     # 3. KPIs
@@ -894,6 +895,7 @@ def reports_dashboard_view(request):
     active_equipment = equipments.filter(status='ACTIVE').count()
     maintenance_count = maintenances.count()
     handover_count = handovers.count()
+    round_count = rounds.count()
     
     # 4. Charts Data
     
@@ -914,6 +916,9 @@ def reports_dashboard_view(request):
     # 4.5 Handover Charts
     handover_by_type = list(handovers.values('type').annotate(count=Count('type')))
     handover_by_area = list(handovers.values('destination_area__name').annotate(count=Count('destination_area')).order_by('-count')[:5])
+
+    # 4.6 Rounds Charts
+    round_by_status = list(rounds.values('general_status').annotate(count=Count('id')))
 
     # 5. Actionable Lists
     # Warranty Expiring in next 90 days
@@ -949,6 +954,8 @@ def reports_dashboard_view(request):
         'lifespan_expired': lifespan_expired,
         'handover_by_type': handover_by_type,
         'handover_by_area': handover_by_area,
+        'round_count': round_count,
+        'round_by_status': round_by_status,
     }
     return render(request, 'inventory/reports_dashboard.html', context)
 
@@ -964,7 +971,8 @@ def export_report_pdf(request):
         generate_maintenance_by_type_chart, 
         generate_equipment_status_chart,
         generate_handover_by_type_chart,
-        generate_handover_by_area_chart
+        generate_handover_by_area_chart,
+        generate_round_status_chart
     )
 
     # 1. Date Filtering (Same logic as dashboard)
@@ -991,12 +999,14 @@ def export_report_pdf(request):
     # 2. Fetch Data
     maintenances = Maintenance.objects.filter(date__range=[start_date, end_date])
     handovers = Handover.objects.filter(date__date__range=[start_date, end_date])
+    rounds = EquipmentRound.objects.filter(datetime__date__range=[start_date, end_date])
     equipments = Equipment.objects.all()
     
     total_equipment = equipments.count()
     active_equipment = equipments.filter(status='ACTIVE').count()
     maintenance_count = maintenances.count()
     handover_count = handovers.count()
+    round_count = rounds.count()
     
     # Warranties expiring next 90 days
     limit_date = today + datetime.timedelta(days=90)
@@ -1021,6 +1031,8 @@ def export_report_pdf(request):
     
     h_by_type_data = list(handovers.values('type').annotate(count=Count('type')))
     h_by_area_data = list(handovers.values('destination_area__name').annotate(count=Count('destination_area')).order_by('-count')[:5])
+    
+    round_by_status_data = list(rounds.values('general_status').annotate(count=Count('id')))
 
     # 3. Generate PDF
     class PDF(FPDF):
@@ -1085,6 +1097,11 @@ def export_report_pdf(request):
     pdf.cell(col_width, 10, 'Entregas:', 0, 0)
     pdf.set_font('Arial', 'B', 11)
     pdf.cell(col_width, 10, str(handover_count), 0, 1)
+    
+    pdf.set_font('Arial', '', 11)
+    pdf.cell(col_width, 10, 'Rondas Realizadas:', 0, 0)
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(col_width, 10, str(round_count), 0, 1)
     pdf.ln(5)
     
     # --- Low Stock Alerts ---
@@ -1175,6 +1192,15 @@ def export_report_pdf(request):
         # Handover Area (Right)
         add_chart_to_pdf(pdf, generate_handover_by_area_chart, h_by_area_data, "Entregas por Área", 110, current_y, 90, 60)
         pdf.set_y(current_y + 75)
+        
+    # Chart 5: Round Status
+    if round_count > 0:
+        current_y = pdf.get_y()
+        if current_y > 200:
+             pdf.add_page()
+             current_y = pdf.get_y()
+        add_chart_to_pdf(pdf, generate_round_status_chart, round_by_status_data, "Estado de Rondas", 60, current_y, 90, 90)
+        pdf.set_y(current_y + 95)
     
     pdf.ln(5)
 
@@ -1354,6 +1380,55 @@ def export_report_pdf(request):
             pdf.cell(30, 8, h.get_type_display()[:15], 1)
             pdf.ln()
 
+    # --- Detailed Rounds Log ---
+    if rounds.exists():
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, '7. Detalle de Rondas de Equipos', 0, 1, 'L', fill=True)
+        pdf.ln(2)
+        
+        pdf.set_font('Arial', 'B', 8)
+        pdf.cell(25, 8, 'Fecha', 1)
+        pdf.cell(25, 8, 'Serial', 1)
+        pdf.cell(45, 8, 'Equipo', 1)
+        pdf.cell(25, 8, 'Estado Gral.', 1)
+        pdf.cell(25, 8, 'Técnico', 1)
+        pdf.cell(45, 8, 'Observaciones', 1)
+        pdf.ln()
+        
+        pdf.set_font('Arial', '', 7)
+        for r in rounds.select_related('equipment', 'performed_by'):
+            r_date = r.datetime.strftime('%Y-%m-%d %H:%M')
+            pdf.cell(25, 8, r_date[:16], 1)
+            
+            pdf.cell(25, 8, r.equipment.serial_number[:15], 1)
+            pdf.cell(45, 8, f"{r.equipment.brand} {r.equipment.model}"[:25], 1)
+            
+            # Translate general_status locally
+            status_map = {'GOOD': 'Bueno', 'REGULAR': 'Regular', 'BAD': 'Malo'}
+            g_status = status_map.get(r.general_status, r.general_status)
+            pdf.cell(25, 8, g_status[:12], 1)
+            
+            tech = r.performed_by.username if r.performed_by else "N/A"
+            pdf.cell(25, 8, tech[:15], 1)
+            
+            obs = r.observations.replace('\n', ' ')[:30] + "..." if r.observations and len(r.observations) > 30 else (r.observations or "N/A")
+            pdf.cell(45, 8, obs, 1)
+            pdf.ln()
+
+    # --- Descriptive Footer Note ---
+    pdf.ln(10)
+    pdf.set_font('Arial', 'I', 9)
+    pdf.set_text_color(100, 100, 100)
+    conclusion_text = (
+        "Nota: Este reporte gerencial ha sido generado automáticamente por el sistema HFPS TIC. "
+        "Las estadísticas presentadas (mantenimientos, alertas de stock, garantías, entregas formales y rondas de inspección técnica) "
+        "reflejan el estado de la infraestructura tecnológica para el período seleccionado. "
+        "Se recomienda la revisión periódica de los equipos reportados en estado 'Regular' o 'Malo' durante las rondas, "
+        "así como programar reemplazos preventivos para aquellos equipos cuya vida útil o garantía haya expirado."
+    )
+    pdf.multi_cell(0, 5, conclusion_text)
+    pdf.set_text_color(0, 0, 0)
     
     # Output
     # FPDF2 returns bytearray by default. Convert to bytes for safety.

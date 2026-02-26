@@ -54,6 +54,11 @@
         <div style="font-size: 2.5rem; font-weight: 800; color: #1f2937;">{{ handover_count }}</div>
         <div style="font-size: 0.875rem; color: #6b7280;">En el periodo seleccionado</div>
     </div>
+    <div class="card" style="border-left: 4px solid #10b981; text-align: center;">
+        <h4 style="margin: 0; color: #6b7280; font-weight: 500;">Rondas Asignadas</h4>
+        <div style="font-size: 2.5rem; font-weight: 800; color: #1f2937;">{{ round_count }}</div>
+        <div style="font-size: 0.875rem; color: #6b7280;">En el periodo seleccionado</div>
+    </div>
 </div>
 
 <!-- Charts Row 1 -->
@@ -105,6 +110,18 @@
             <canvas id="handAreaChart"></canvas>
         </div>
     </div>
+</div>
+
+<!-- Charts Row 4 -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+    <div class="card">
+        <h3>Estado General de Rondas</h3>
+        <div style="height: 300px; position: relative;">
+            <canvas id="roundStatusChart"></canvas>
+        </div>
+    </div>
+    <!-- Optionally add another chart here in the future -->
 </div>
 
 <!-- Warranty Alert Table -->
@@ -229,6 +246,7 @@
     const statusData = {{ eq_by_status| safe }};
     const handTypeData = {{ handover_by_type| safe }};
     const handAreaData = {{ handover_by_area| safe }};
+    const roundStatusData = {{ round_by_status| safe }};
 
     // --- Chart 1: Equipment Types ---
 
@@ -341,6 +359,27 @@
             maintainAspectRatio: false,
             scales: { x: { beginAtZero: true } },
             plugins: { legend: { display: false } }
+        }
+    });
+
+    // --- Chart 7: Round General Status ---
+    new Chart(document.getElementById('roundStatusChart'), {
+        type: 'pie', // Or doughnut
+        data: {
+            labels: roundStatusData.map(d => {
+                if (d.general_status === 'GOOD') return 'Bueno';
+                if (d.general_status === 'REGULAR') return 'Regular';
+                if (d.general_status === 'BAD') return 'Malo';
+                return d.general_status;
+            }),
+            datasets: [{
+                data: roundStatusData.map(d => d.count),
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#9ca3af'],
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
         }
     });
 </script>
