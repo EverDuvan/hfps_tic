@@ -8,6 +8,12 @@
     <title>HFPS TIC | {% block title %}Dashboard{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+    {% if system_settings and system_settings.logo %}
+    <link rel="icon" href="{{ system_settings.logo.url }}">
+    {% else %}
+    <link rel="icon" href="{% static 'img/hfps.jpg' %}">
+    {% endif %}
 </head>
 
 <body>
