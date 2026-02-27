@@ -176,6 +176,8 @@ def export_report_pdf(request):
             
             if os.path.exists(logo_path):
                 self.image(logo_path, 10, 8, 33)
+                # A4 width is 210mm. 210 - 10 (margin) - 33 (width) = 167
+                self.image(logo_path, 167, 8, 33)
                 
             self.set_font('Arial', 'B', 15)
             self.cell(80)

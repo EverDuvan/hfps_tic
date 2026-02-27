@@ -195,6 +195,8 @@ def export_equipment_history_pdf(request, pk):
                     logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'hfps.jpg')
             if os.path.exists(logo_path):
                 self.image(logo_path, 10, 8, 33)
+                # A4 width is 210mm. 210 - 10 (margin) - 33 (width) = 167
+                self.image(logo_path, 167, 8, 33)
             self.set_font('Arial', 'B', 14)
             self.cell(80)
             self.cell(30, 10, 'Hoja de Vida del Equipo', 0, 1, 'C')

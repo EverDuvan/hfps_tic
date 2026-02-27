@@ -68,6 +68,8 @@ def draw_header(pdf, title, doc_code, date_obj):
 
     if os.path.exists(logo_path):
         pdf.image(logo_path, x=10, y=start_y, w=30, h=20)
+        # Assuming A4 width is 210mm, right side image at x=170 + 30w = 200 (10mm margin)
+        pdf.image(logo_path, x=170, y=start_y, w=30, h=20)
     else:
         # Fallback if image not found
         pdf.cell(30, 20, "HFPS", border=1, align='C') 
