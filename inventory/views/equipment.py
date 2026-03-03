@@ -14,7 +14,7 @@ import qrcode
 import openpyxl
 
 from ..models import Equipment, Maintenance, Handover, Area, ComponentLog, EquipmentRound
-from ..forms import EquipmentForm, ExcelImportForm, ComponentLogForm
+from ..forms import EquipmentForm, ExcelImportForm, ComponentLogForm, RetirementForm
 from ..choices import EQUIPMENT_STATUS_CHOICES, EQUIPMENT_TYPE_CHOICES, OWNERSHIP_CHOICES
 
 logger = logging.getLogger('inventory')
@@ -198,13 +198,32 @@ def equipment_detail_view(request, pk):
 
 @login_required
 def equipment_retire_view(request, pk):
-    """Retire (dar de baja) an equipment — POST only."""
+    """Retire (dar de baja) an equipment."""
     equipment = get_object_or_404(Equipment, pk=pk)
+    
     if request.method == 'POST':
-        equipment.status = 'RETIRED'
-        equipment.save()
-        messages.success(request, f'El equipo {equipment.serial_number} ha sido dado de baja exitosamente.')
-    return redirect('inventory:equipment_detail', pk=pk)
+        form = RetirementForm(request.POST, request.FILES)
+        if form.is_valid():
+            retirement_log = form.save(commit=False)
+            retirement_log.equipment = equipment
+            retirement_log.performed_by = request.user
+            retirement_log.save()
+            
+            equipment.status = 'RETIRED'
+            equipment.save()
+            
+            messages.success(request, f'El equipo {equipment.serial_number} ha sido dado de baja exitosamente.')
+            return redirect('inventory:equipment_detail', pk=pk)
+    else:
+        form = RetirementForm()
+
+    context = {
+        'form': form,
+        'asset': equipment,
+        'asset_type': 'equipo',
+        'title': f'Dar de Baja {equipment.serial_number}'
+    }
+    return render(request, 'inventory/retire_asset_form.html', context)
 
 
 @login_required
@@ -365,6 +384,24 @@ def equipment_history_view(request, pk):
             'user': c.performed_by.username if c.performed_by else 'N/A',
             'icon': 'fa-microchip',
             'color': 'secondary'
+        })
+        
+    # 6. Retirement Logs
+    for r in equipment.retirement_logs.all():
+        sort_dt = timezone.datetime.combine(r.date, timezone.datetime.min.time()) if hasattr(r.date, 'hour') is False else r.date
+        if timezone.is_aware(equipment.created_at) and not timezone.is_aware(sort_dt):
+            sort_dt = timezone.make_aware(sort_dt, timezone.get_current_timezone())
+            
+        events.append({
+            'type': 'retirement',
+            'date': sort_dt,
+            'title': 'Equipo Dado de Baja',
+            'description': r.reason,
+            'user': r.performed_by.username if r.performed_by else 'N/A',
+            'icon': 'fa-ban',
+            'color': 'danger',
+            'photo_url': r.photo.url if r.photo else None,
+            'photo_path': r.photo.path if r.photo else None
         })
         
     # Sort descending

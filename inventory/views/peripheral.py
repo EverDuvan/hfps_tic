@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 
 from ..models import Peripheral, Handover
-from ..forms import PeripheralForm, PeripheralTypeForm
+from ..forms import PeripheralForm, PeripheralTypeForm, RetirementForm
 
 logger = logging.getLogger('inventory')
 
@@ -94,11 +94,30 @@ def peripheral_type_create_view(request):
 
 @login_required
 def retire_peripheral_view(request, pk):
-    """Retire (dar de baja) a peripheral — POST only."""
+    """Retire (dar de baja) a peripheral."""
     peripheral = get_object_or_404(Peripheral, pk=pk)
+    
     if request.method == 'POST':
-        # Logic to retire: set quantity to 0 and maybe a flag if model supports it
-        # For now, we'll just show a success message and redirect
-        # Note: Peripheral model doesn't have a status field like Equipment
-        messages.success(request, f'El periférico {peripheral.brand} {peripheral.model} ha sido dado de baja.')
-    return redirect('inventory:peripheral_detail', pk=pk)
+        form = RetirementForm(request.POST, request.FILES)
+        if form.is_valid():
+            retirement_log = form.save(commit=False)
+            retirement_log.peripheral = peripheral
+            retirement_log.performed_by = request.user
+            retirement_log.save()
+            
+            peripheral.status = 'RETIRED'
+            peripheral.quantity = 0  # Logic to retire: set quantity to 0
+            peripheral.save()
+            
+            messages.success(request, f'El periférico {peripheral.brand} {peripheral.model} ha sido dado de baja.')
+            return redirect('inventory:peripheral_detail', pk=pk)
+    else:
+        form = RetirementForm()
+
+    context = {
+        'form': form,
+        'asset': peripheral,
+        'asset_type': 'periférico',
+        'title': f'Dar de Baja {peripheral.brand} {peripheral.model}'
+    }
+    return render(request, 'inventory/retire_asset_form.html', context)

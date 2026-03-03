@@ -424,7 +424,7 @@ def generate_equipment_history_pdf(equipment, events):
     
     draw_field(pdf, "Almacenamiento:", clean_text(equipment.storage or "-"), 30, 40)
     draw_field(pdf, "Direccion IP:", clean_text(equipment.ip_address or "-"), 20, 40)
-    draw_field(pdf, "MAC Address:", clean_text(equipment.mac_address or "-"), 20, 40, ln=1)
+    draw_field(pdf, "Voltaje:", clean_text(equipment.voltage or "-"), 20, 40, ln=1)
 
     pdf.ln(2)
 
@@ -513,6 +513,32 @@ def generate_equipment_history_pdf(equipment, events):
             pdf.set_xy(x_start, y_start + h)
 
     pdf.ln(15)
+
+    events_with_photos = [e for e in events if e.get('photo_path')]
+    if events_with_photos:
+        pdf.add_page()
+        draw_section_title(pdf, "5. ANEXOS FOTOGRAFICOS (EVIDENCIA DE BAJA / OTROS)")
+        pdf.ln(5)
+        for e in events_with_photos:
+            try:
+                import os
+                if os.path.exists(e['photo_path']):
+                    date_str = e['date'].strftime('%Y-%m-%d %H:%M') if e['date'] else "-"
+                    pdf.set_font("Arial", 'B', 9)
+                    pdf.cell(0, 8, clean_text(f"Evidencia de evento: {e['title']} - Fecha: {date_str}"), ln=1)
+                    
+                    # FPDF handles jpeg/png. Save x,y
+                    x_pos = pdf.get_x()
+                    y_pos = pdf.get_y()
+                    
+                    # Insert image
+                    pdf.image(e['photo_path'], x=x_pos, y=y_pos, w=100) # w=100mm -> 10cm width
+                    pdf.ln(80) # Move past the image (assuming height ~75mm max based on aspect ratio)
+            except Exception as ex:
+                print(f"Error loading image in PDF: {ex}")
+                pdf.cell(0, 8, clean_text(f"[ Error al cargar imagen de evidencia ]"), ln=1)
+                
+        pdf.ln(15)
 
     # Footer Signatures
     y_sig = pdf.get_y()

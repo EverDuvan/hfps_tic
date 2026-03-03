@@ -179,12 +179,25 @@ def export_equipment_history_pdf(request, pk):
             'description': c.description or '-',
             'user': c.performed_by.username if c.performed_by else 'N/A',
         })
+    for r in equipment.retirement_logs.all().order_by('-date'):
+        sort_dt = timezone.datetime.combine(r.date, timezone.datetime.min.time()) if hasattr(r.date, 'hour') is False else r.date
+        if timezone.is_aware(equipment.created_at) and not timezone.is_aware(sort_dt):
+            sort_dt = timezone.make_aware(sort_dt, timezone.get_current_timezone())
+        events.append({
+            'type': 'Baja de Equipo',
+            'date': sort_dt,
+            'description': r.reason or '-',
+            'user': r.performed_by.username if r.performed_by else 'N/A',
+            'photo_path': r.photo.path if r.photo else None
+        })
     events.sort(key=lambda x: x['date'], reverse=True)
 
     # --- Build PDF ---
     class PDF(FPDF):
         def header(self):
         # Add Logo
+            import os
+            from django.conf import settings
             from inventory.models import SystemSettings
             sys_settings = SystemSettings.load()
             if sys_settings and sys_settings.logo and os.path.exists(sys_settings.logo.path):
@@ -276,6 +289,37 @@ def export_equipment_history_pdf(request, pk):
     if not events:
         pdf.set_font('Arial', 'I', 9)
         pdf.cell(0, 10, 'Sin historial registrado.', 0, 1, 'C')
+
+    # --- Annex Fotos ---
+    events_with_photos = [e for e in events if e.get('photo_path')]
+    if events_with_photos:
+        pdf.add_page()
+        pdf.set_fill_color(240, 240, 240)
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, '3. Anexos Fotográficos', 0, 1, 'L', fill=True)
+        pdf.ln(5)
+        
+        for e in events_with_photos:
+            try:
+                import os
+                if os.path.exists(e['photo_path']):
+                    date_str = e['date'].strftime('%Y-%m-%d %H:%M') if hasattr(e['date'], 'strftime') else str(e['date'])[:16]
+                    pdf.set_font("Arial", 'B', 9)
+                    # Clean text to avoid latin-1 encoding errors with accents
+                    def clean_text_annex(text):
+                        try:
+                            return str(text).encode('cp1252', 'replace').decode('latin-1')
+                        except Exception:
+                            return str(text)
+                    
+                    pdf.cell(0, 8, clean_text_annex(f"Evidencia: {e['type']} - Fecha: {date_str}"), ln=1)
+                    
+                    x_pos = pdf.get_x()
+                    y_pos = pdf.get_y()
+                    pdf.image(e['photo_path'], x=x_pos, y=y_pos, w=100) # w=100mm
+                    pdf.ln(80) 
+            except Exception as ex:
+                pdf.cell(0, 8, f"[ Error al cargar imagen de evidencia: {ex} ]", ln=1)
 
     # --- Footer note ---
     pdf.ln(8)

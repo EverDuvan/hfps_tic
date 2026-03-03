@@ -29,15 +29,52 @@
         <a href="{% url 'inventory:equipment_qr' equipment.pk %}" target="_blank" class="btn"
             style="background-color: #4b5563; color: white;">📱 Ver QR</a>
         {% if equipment.status != 'RETIRED' %}
-        <form method="post" action="{% url 'inventory:equipment_retire' equipment.pk %}" style="margin: 0;"
-            onsubmit="return confirm('¿Está seguro que desea dar de baja este equipo? Esta acción cambiará su estado a RETIRADO.');">
-            {% csrf_token %}
-            <button type="submit" class="btn" style="background-color: #ef4444; color: white;">
-                🚫 Dar de Baja
-            </button>
-        </form>
+        <a href="{% url 'inventory:equipment_retire' equipment.pk %}" class="btn"
+            style="background-color: #ef4444; color: white;">
+            🚫 Dar de Baja
+        </a>
         {% endif %}
     </div>
+
+    {% if equipment.status == 'RETIRED' and equipment.retirement_logs.last %}
+    <div
+        style="margin-bottom: 2rem; padding: 1.5rem; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;">
+        <h3
+            style="margin: 0 0 1rem 0; color: #991b1b; font-size: 1.125rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🚫</span> Equipo Dado de Baja
+        </h3>
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2rem; align-items: start;">
+            <div>
+                <span
+                    style="display: block; font-size: 0.875rem; font-weight: 600; color: #7f1d1d; margin-bottom: 0.25rem;">
+                    Motivo / Argumentos:
+                </span>
+                <p style="margin: 0; color: #991b1b; font-size: 0.95rem; line-height: 1.5;">
+                    {{ equipment.retirement_logs.last.reason|linebreaksbr }}
+                </p>
+                {% with r_log=equipment.retirement_logs.last %}
+                <div style="margin-top: 1rem; font-size: 0.85rem; color: #b91c1c;">
+                    Registrado por: <strong>{% if r_log.performed_by.get_full_name %}{{ r_log.performed_by.get_full_name
+                        }}{% else %}{{ r_log.performed_by.username }}{% endif %}</strong> el {{ r_log.date|date:"d/m/Y
+                    H:i" }}
+                </div>
+                {% endwith %}
+            </div>
+            {% if equipment.retirement_logs.last.photo %}
+            <div>
+                <a href="{{ equipment.retirement_logs.last.photo.url }}" target="_blank" style="display: block;">
+                    <img src="{{ equipment.retirement_logs.last.photo.url }}" alt="Evidencia de baja"
+                        style="max-width: 200px; max-height: 150px; border-radius: 6px; border: 1px solid #fca5a5; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                </a>
+                <span
+                    style="display: block; text-align: center; font-size: 0.75rem; color: #991b1b; margin-top: 0.5rem;">
+                    Clic para ampliar
+                </span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
         <div>
@@ -107,7 +144,7 @@
                     {{ equipment.ownership|default:"-" }}
                 </span>
             </div>
-            {% if equipment.ownership and equipment.ownership.name == 'Alquilado / Leasing' or equipment.ownership and equipment.ownership.name == 'Comodato' %}
+            {% if equipment.ownership and equipment.ownership.name in 'Alquilado / Leasing, Comodato' %}
             <div>
                 <span style="display: block; font-size: 0.75rem; color: #6b7280;">Proveedor</span>
                 <span style="font-weight: 500;">{{ equipment.provider_name|default:"-" }}</span>
