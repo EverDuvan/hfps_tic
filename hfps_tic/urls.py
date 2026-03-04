@@ -27,6 +27,8 @@ router.register(r'maintenance', views_api.MaintenanceViewSet)
 router.register(r'handovers', views_api.HandoverViewSet)
 router.register(r'areas', views_api.AreaViewSet)
 
+from inventory.views.pages import favicon_view
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
@@ -34,4 +36,5 @@ urlpatterns = [
     path('', include('inventory.urls')),
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls')),
+    path('favicon.ico', favicon_view),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

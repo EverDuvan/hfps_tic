@@ -128,3 +128,16 @@ def manual_view(request):
 
 def privacy_policy_view(request):
     return render(request, 'inventory/privacy.html')
+
+def favicon_view(request):
+    from django.conf import settings
+    from inventory.models import SystemSettings
+    import os
+    
+    sys_settings = SystemSettings.load()
+    if sys_settings and sys_settings.logo and os.path.exists(sys_settings.logo.path):
+        url = sys_settings.logo.url
+    else:
+        url = settings.STATIC_URL + 'img/hfps.jpg'
+        
+    return redirect(url)
