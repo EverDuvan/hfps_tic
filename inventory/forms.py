@@ -77,7 +77,7 @@ class EquipmentForm(forms.ModelForm):
         for field in self.fields:
             if isinstance(self.fields[field].widget, forms.Select):
                 self.fields[field].widget.attrs.update({'class': 'form-select'})
-            elif isinstance(self.fields[field].widget, (forms.TextInput, forms.Textarea, forms.TimeInput, forms.DateInput, forms.NumberInput, forms.EmailInput)):
+            elif isinstance(self.fields[field].widget, (forms.TextInput, forms.Textarea, forms.TimeInput, forms.DateInput, forms.NumberInput, forms.EmailInput, forms.ClearableFileInput)):
                 self.fields[field].widget.attrs.update({'class': 'form-control'})
 
 class PeripheralForm(forms.ModelForm):

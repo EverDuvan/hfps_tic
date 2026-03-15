@@ -133,9 +133,16 @@
     <!-- Header Stats -->
     <div class="card" style="margin-bottom: 2rem;">
         <div style="display: flex; gap: 2rem; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-            <div>
-                <h3 style="margin: 0; color: #1e293b;">{{ equipment.serial_number }}</h3>
-                <div style="color: #64748b; font-size: 1.1rem;">{{ equipment.brand }} {{ equipment.model }}</div>
+            <div style="display: flex; gap: 1.5rem; align-items: center;">
+                {% if equipment.photo %}
+                <a href="{{ equipment.photo.url }}" target="_blank">
+                    <img src="{{ equipment.photo.url }}" alt="Foto del equipo" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb;">
+                </a>
+                {% endif %}
+                <div>
+                    <h3 style="margin: 0; color: #1e293b;">{{ equipment.serial_number }}</h3>
+                    <div style="color: #64748b; font-size: 1.1rem;">{{ equipment.brand }} {{ equipment.model }}</div>
+                </div>
             </div>
             <div style="text-align: right;">
                 <span class="status-badge 

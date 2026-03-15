@@ -42,12 +42,12 @@ class TechnicianAdmin(BaseUserAdmin):
 
 @admin.register(Equipment)
 class EquipmentAdmin(admin.ModelAdmin):
-    list_display = ('serial_number', 'brand', 'model', 'type', 'area', 'status', 'os_user')
+    list_display = ('serial_number', 'fixed_asset', 'brand', 'model', 'type', 'area', 'status', 'os_user')
     list_filter = ('type', 'status', 'area', 'brand')
-    search_fields = ('serial_number', 'brand', 'model', 'os_user')
+    search_fields = ('serial_number', 'fixed_asset', 'brand', 'model', 'os_user')
     fieldsets = (
         (None, {
-            'fields': ('serial_number', 'type', 'brand', 'model', 'area', 'status')
+            'fields': ('serial_number', 'fixed_asset', 'type', 'brand', 'model', 'area', 'status')
         }),
         ('Detalles Técnicos', {
             'fields': ('processor', 'ram', 'storage', 'operating_system', 'os_user', 'voltage', 'amperage', 'screen_size')
@@ -65,9 +65,9 @@ class PeripheralTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Peripheral)
 class PeripheralAdmin(admin.ModelAdmin):
-    list_display = ('type', 'brand', 'model', 'quantity', 'area', 'connected_to', 'status')
+    list_display = ('type', 'brand', 'model', 'fixed_asset', 'quantity', 'area', 'connected_to', 'status')
     list_filter = ('type', 'status', 'area')
-    search_fields = ('serial_number', 'brand', 'model')
+    search_fields = ('serial_number', 'fixed_asset', 'brand', 'model')
     actions = [export_as_excel_action]
 
 @admin.register(Maintenance)

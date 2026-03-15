@@ -158,7 +158,7 @@ def equipment_list_view(request):
 @login_required
 def equipment_create_view(request):
     if request.method == 'POST':
-        form = EquipmentForm(request.POST) 
+        form = EquipmentForm(request.POST, request.FILES) 
         if form.is_valid():
             form.save()
             return redirect('inventory:equipment_list')
@@ -172,7 +172,7 @@ def equipment_create_view(request):
 def equipment_edit_view(request, pk):
     equipment = get_object_or_404(Equipment, pk=pk)
     if request.method == 'POST':
-        form = EquipmentForm(request.POST, instance=equipment)
+        form = EquipmentForm(request.POST, request.FILES, instance=equipment)
         if form.is_valid():
             form.save()
             return redirect('inventory:equipment_detail', pk=pk)

@@ -257,6 +257,13 @@ def export_equipment_history_pdf(request, pk):
     if hasattr(equipment, 'ownership') and equipment.ownership:
         spec_row('Tipo Propiedad:', str(equipment.ownership))
         spec_row('Proveedor:', equipment.provider_name or '-')
+        
+    # Render Equipment Photo on the right side if it exists
+    if equipment.photo and os.path.exists(equipment.photo.path):
+        # Position: Left margin is 10, specs width ~50+80=130. We'll put image at x=140, y=45
+        # The y position roughly aligns with the start of the "1. Información del Equipo" section
+        pdf.image(equipment.photo.path, x=140, y=55, w=50)
+
     pdf.ln(5)
 
     # --- History Table ---
@@ -301,7 +308,6 @@ def export_equipment_history_pdf(request, pk):
         
         for e in events_with_photos:
             try:
-                import os
                 if os.path.exists(e['photo_path']):
                     date_str = e['date'].strftime('%Y-%m-%d %H:%M') if hasattr(e['date'], 'strftime') else str(e['date'])[:16]
                     pdf.set_font("Arial", 'B', 9)

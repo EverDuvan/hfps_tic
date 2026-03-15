@@ -72,6 +72,7 @@ class OwnershipType(models.Model):
 class Equipment(models.Model):
     """Model representing an IT Equipment item."""
     serial_number = models.CharField(max_length=100, unique=True, verbose_name=_("Número de Serie"))
+    fixed_asset = models.CharField(max_length=100, unique=True, blank=True, null=True, verbose_name=_("Activo Fijo"))
     type = models.CharField(max_length=20, choices=EQUIPMENT_TYPE_CHOICES, verbose_name=_("Tipo"))
     brand = models.CharField(max_length=100, verbose_name=_("Marca"))
     model = models.CharField(max_length=100, verbose_name=_("Modelo"))
@@ -118,6 +119,7 @@ class Equipment(models.Model):
     provider_name = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Proveedor / Empresa"))
     rental_contract_ref = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Ref. Contrato / Ticket"))
     support_phone = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Teléfono Soporte"))
+    photo = models.ImageField(upload_to='equipment_photos/', blank=True, null=True, verbose_name=_("Foto"))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -144,6 +146,7 @@ class PeripheralType(models.Model):
 class Peripheral(models.Model):
     """Model representing a Peripheral (Keyboard, Mouse, etc.). Acts as a Product/SKU."""
     serial_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Número de Serie")) 
+    fixed_asset = models.CharField(max_length=100, unique=True, blank=True, null=True, verbose_name=_("Activo Fijo"))
     
     # REMOVED OLD TYPE (Char)
     # type = models.CharField(max_length=20, choices=PERIPHERAL_TYPE_CHOICES, verbose_name=_("Tipo (Legacy)"), blank=True, null=True)

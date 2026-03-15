@@ -6,9 +6,16 @@
 {% block content %}
 <div class="card" style="margin-bottom: 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
-        <div>
-            <h2 style="margin: 0; color: #111827; font-size: 1.5rem;">{{ equipment.brand }} {{ equipment.model }}</h2>
-            <p style="margin: 0.5rem 0 0; color: #6b7280;">{{ equipment.get_type_display }}</p>
+        <div style="display: flex; gap: 1.5rem; align-items: center;">
+            {% if equipment.photo %}
+            <a href="{{ equipment.photo.url }}" target="_blank">
+                <img src="{{ equipment.photo.url }}" alt="Foto del equipo" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb;">
+            </a>
+            {% endif %}
+            <div>
+                <h2 style="margin: 0; color: #111827; font-size: 1.5rem;">{{ equipment.brand }} {{ equipment.model }}</h2>
+                <p style="margin: 0.5rem 0 0; color: #6b7280;">{{ equipment.get_type_display }}</p>
+            </div>
         </div>
         <span style="
             padding: 0.5rem 1rem; 
