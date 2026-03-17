@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="card" style="max-width: 600px; margin: 0 auto;">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
         <div class="form-group">
@@ -59,6 +59,16 @@
             {{ form.area }}
             {% if form.area.errors %}
             <div style="color: #ef4444; font-size: 0.8rem;">{{ form.area.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label for="{{ form.signature_image.id_for_label }}" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                {{ form.signature_image.label }} <small style="color: #64748b; font-weight: normal;">(Opcional, imagen con firma digitalizada)</small>
+            </label>
+            {{ form.signature_image }}
+            {% if form.signature_image.errors %}
+            <div style="color: #ef4444; font-size: 0.8rem;">{{ form.signature_image.errors }}</div>
             {% endif %}
         </div>
 

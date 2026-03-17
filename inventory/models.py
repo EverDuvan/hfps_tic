@@ -2,6 +2,8 @@ from django.db import models
 from simple_history.models import HistoricalRecords
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from .utils import generate_maintenance_pdf, generate_handover_pdf
@@ -44,6 +46,7 @@ class Client(models.Model):
     email = models.EmailField(blank=True, null=True, verbose_name=_("Correo Electrónico"))
     phone = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Teléfono"))
     area = models.ForeignKey(Area, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Área"))
+    signature_image = models.ImageField(upload_to='signatures/clients/', blank=True, null=True, verbose_name=_("Firma (Imagen)"))
 
     def __str__(self):
         return self.name
@@ -58,6 +61,23 @@ class Technician(User):
         proxy = True
         verbose_name = _("Ingeniero / Técnico")
         verbose_name_plural = _("Ingenieros / Técnicos")
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    signature_image = models.ImageField(upload_to='signatures/technicians/', blank=True, null=True, verbose_name=_("Firma Digitalizada"))
+
+    def __str__(self):
+        return f"Perfil de {self.user.username}"
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
 
 class OwnershipType(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name=_("Nombre del Tipo de Propiedad"))

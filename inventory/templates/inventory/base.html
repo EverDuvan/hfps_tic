@@ -69,9 +69,13 @@
                 class="{% if request.resolver_match.url_name == 'cost_center_list' or request.resolver_match.url_name == 'cost_center_edit' %}active{% endif %}">
                 💰 Centros de Costos
             </a>
+            <a href="{% url 'inventory:client_list' %}"
+                class="{% if request.resolver_match.url_name == 'client_list' or request.resolver_match.url_name == 'client_edit' or request.resolver_match.url_name == 'client_create' %}active{% endif %}">
+                👥 Funcionarios
+            </a>
             {% if user.is_staff or user.is_superuser %}
             <a href="{% url 'users:user_list' %}" class="{% if 'users/manage' in request.path %}active{% endif %}">
-                👥 Usuarios
+                👤 Usuarios (Técnicos)
             </a>
             {% endif %}
 

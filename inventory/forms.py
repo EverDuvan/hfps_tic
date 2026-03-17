@@ -120,10 +120,10 @@ class ClientForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields:
-            if hasattr(self.fields[field], 'widget') and hasattr(self.fields[field].widget, 'attrs'):
-                current_classes = self.fields[field].widget.attrs.get('class', '')
-                if 'form-select' not in current_classes:
-                    self.fields[field].widget.attrs['class'] = (current_classes + ' form-control').strip()
+            if isinstance(self.fields[field].widget, (forms.TextInput, forms.Textarea, forms.EmailInput, forms.ClearableFileInput)):
+                self.fields[field].widget.attrs.update({'class': 'form-control'})
+            elif isinstance(self.fields[field].widget, forms.Select):
+                self.fields[field].widget.attrs.update({'class': 'form-select'})
 
 class HandoverForm(forms.ModelForm):
     class Meta:

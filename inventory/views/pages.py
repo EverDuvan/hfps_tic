@@ -3,7 +3,9 @@ import logging
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 
-from ..models import Area, CostCenter
+from django.db.models import Q
+
+from ..models import Area, CostCenter, Client
 from ..forms import AreaForm, CostCenterForm, ClientForm
 
 logger = logging.getLogger('inventory')
@@ -11,7 +13,7 @@ logger = logging.getLogger('inventory')
 __all__ = [
     'area_create_view', 'area_list_view', 'area_edit_view',
     'cost_center_create_view', 'cost_center_list_view', 'cost_center_edit_view',
-    'client_create_view',
+    'client_create_view', 'client_list_view', 'client_edit_view',
     'user_list_view', 'user_create_view',
     'support_view', 'manual_view', 'privacy_policy_view',
 ]
@@ -92,7 +94,7 @@ def cost_center_edit_view(request, pk):
 @login_required
 def client_create_view(request):
     if request.method == 'POST':
-        form = ClientForm(request.POST)
+        form = ClientForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             next_url = request.GET.get('next')
@@ -103,6 +105,35 @@ def client_create_view(request):
         form = ClientForm()
     
     return render(request, 'inventory/client_form.html', {'form': form})
+
+
+@login_required
+def client_list_view(request):
+    query = request.GET.get('q', '')
+    clients = Client.objects.all().order_by('name')
+    
+    if query:
+        clients = clients.filter(
+            Q(name__icontains=query) |
+            Q(identification__icontains=query) |
+            Q(email__icontains=query)
+        )
+        
+    return render(request, 'inventory/client_list.html', {'clients': clients, 'search_query': query})
+
+
+@login_required
+def client_edit_view(request, pk):
+    client = get_object_or_404(Client, pk=pk)
+    if request.method == 'POST':
+        form = ClientForm(request.POST, request.FILES, instance=client)
+        if form.is_valid():
+            form.save()
+            return redirect('inventory:client_list')
+    else:
+        form = ClientForm(instance=client)
+    
+    return render(request, 'inventory/client_form.html', {'form': form, 'title': f'Editar Funcionario: {client.name}'})
 
 
 # User management is handled by the 'users' app.

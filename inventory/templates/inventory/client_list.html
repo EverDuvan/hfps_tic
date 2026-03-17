@@ -1,0 +1,75 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Funcionarios / Clientes{% endblock %}
+{% block page_title %}Gestión de Funcionarios{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div class="search-bar">
+            <form method="get" action="" style="display: flex; gap: 0.5rem; width: 100%;">
+                <input type="text" name="q" placeholder="Buscar por nombre, cédula o correo..." 
+                       value="{{ search_query }}" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; width: 300px;">
+                <button type="submit" class="btn" style="background-color: #6b7280; color: white;">Buscar</button>
+            </form>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{% url 'inventory:export_data' 'client' %}" class="btn"
+                style="background-color: #10b981; color: white;">Exportar Excel</a>
+            <a href="{% url 'inventory:client_create' %}?next={% url 'inventory:client_list' %}" class="btn btn-primary">
+                ➕ Nuevo Funcionario
+            </a>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Identificación</th>
+                    <th>Área</th>
+                    <th>Correo</th>
+                    <th>Firma Cargada</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td style="font-weight: 500; color: #111827;">{{ client.name }}</td>
+                    <td>{{ client.identification }}</td>
+                    <td>
+                        {% if client.area %}
+                        {{ client.area.name }}
+                        {% else %}
+                        <span style="color: #9ca3af;">Sin asignar</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ client.email|default:"-" }}</td>
+                    <td>
+                        {% if client.signature_image %}
+                        <span class="status-badge status-good">✔️ Sí</span>
+                        {% else %}
+                        <span class="status-badge" style="background-color: #f3f4f6; color: #6b7280;">❌ No</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'inventory:client_edit' client.pk %}" class="btn"
+                            style="padding: 0.25rem 0.6rem; font-size: 0.8rem; background-color: #3b82f6;">
+                            ✏️
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem 0; color: #6b7280;">
+                        No se encontraron funcionarios registrados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

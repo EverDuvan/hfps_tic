@@ -231,6 +231,21 @@ def generate_maintenance_pdf(m):
 
     # Signatures
     y_sig = pdf.get_y()
+    
+    # We will print the images slightly above the line
+    tech_signature = None
+    if m.performed_by and hasattr(m.performed_by, 'profile') and m.performed_by.profile.signature_image:
+        tech_signature = m.performed_by.profile.signature_image.path
+
+    # Left: Receiving user
+    if tech_signature and os.path.exists(tech_signature):
+        # The line is at y_sig + 15, x=110 to 190. Center is 150.
+        # Image width 40, x=130
+        try:
+            pdf.image(tech_signature, x=130, y=y_sig - 10, w=40, h=25)
+        except Exception:
+            pass
+
     pdf.line(10, y_sig + 15, 90, y_sig + 15)
     pdf.set_xy(10, y_sig + 16)
     pdf.cell(80, 5, "NOMBRE USUARIO / RECIBIDO POR", align='C', ln=1)
@@ -360,13 +375,27 @@ def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
     if y_sig > 250:
         pdf.add_page()
         y_sig = pdf.get_y() + 20
-    
+        
     # Area de firmas
-    pdf.set_font("Arial", 'B', 8)
-    
+    tech_signature = None
+    if handover.technician and hasattr(handover.technician, 'profile') and handover.technician.profile.signature_image:
+        tech_signature = handover.technician.profile.signature_image.path
+
+    client_signature = None
+    if handover.client and handover.client.signature_image:
+        client_signature = handover.client.signature_image.path
+
     # Left: Deliverer (Technician usually)
-    pdf.line(20, y_sig, 90, y_sig)
-    pdf.set_xy(20, y_sig + 1)
+    if tech_signature and os.path.exists(tech_signature):
+        try:
+            # Line is from x=20 to 90. center=55. Image w=40, start x=35.
+            pdf.image(tech_signature, x=35, y=y_sig - 10, w=40, h=25)
+        except Exception:
+            pass
+            
+    pdf.set_font("Arial", 'B', 8)
+    pdf.line(20, y_sig + 15, 90, y_sig + 15)
+    pdf.set_xy(20, y_sig + 16)
     tech_name = handover.technician.get_full_name() if handover.technician else "TECNICO / RESPONSABLE"
     pdf.cell(70, 5, "ENTREGADO POR:", align='C', ln=1)
     pdf.set_x(20)
@@ -374,8 +403,15 @@ def generate_handover_pdf(handover, equipment_list=None, peripheral_list=None):
     pdf.cell(70, 5, clean_text(tech_name), align='C', ln=1)
     
     # Right: Receiver
-    pdf.line(120, y_sig, 190, y_sig)
-    pdf.set_xy(120, y_sig + 1)
+    if client_signature and os.path.exists(client_signature):
+        try:
+            # Line is from x=120 to 190. center=155. Image w=40, start x=135.
+            pdf.image(client_signature, x=135, y=y_sig - 10, w=40, h=25)
+        except Exception:
+            pass
+            
+    pdf.line(120, y_sig + 15, 190, y_sig + 15)
+    pdf.set_xy(120, y_sig + 16)
     pdf.set_font("Arial", 'B', 8)
     pdf.cell(70, 5, "RECIBIDO POR:", align='C', ln=1)
     
