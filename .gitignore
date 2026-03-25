@@ -4,7 +4,9 @@
 *.pyc
 __pycache__
 db.sqlite3
-media
+media/*
+!media/site_logo/
+!media/site_logo/*
 
 # Sensitive files #
 *.pem
