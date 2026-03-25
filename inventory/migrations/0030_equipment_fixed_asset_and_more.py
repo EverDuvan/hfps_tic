@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('inventory', '0029_load_seed_data'),
+        ('inventory', '0028_systemsettings'),
     ]
 
     operations = [

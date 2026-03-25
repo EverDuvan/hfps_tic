@@ -12,7 +12,7 @@ def reverse_seed_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('inventory', '0028_systemsettings'),
+        ('inventory', '0032_client_signature_image_userprofile'),
     ]
 
     operations = [
